@@ -2,7 +2,6 @@ package zw.co.digistock;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
  * DigiStock - Digital Livestock Management System for Zimbabwe
@@ -18,7 +17,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * @version 1.0.0
  */
 @SpringBootApplication
-@EnableJpaAuditing
 public class DigistockApplication {
 
     public static void main(String[] args) {
