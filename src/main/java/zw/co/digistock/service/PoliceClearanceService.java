@@ -3,6 +3,8 @@ package zw.co.digistock.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import zw.co.digistock.domain.Livestock;
@@ -177,33 +179,30 @@ public class PoliceClearanceService {
     }
 
     /**
-     * Get valid clearances for livestock
+     * Get valid clearances for livestock (paginated)
      */
     @Transactional(readOnly = true)
-    public List<ClearanceResponse> getValidClearancesForLivestock(UUID livestockId) {
-        return clearanceRepository.findValidClearancesForLivestock(livestockId, LocalDate.now()).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<ClearanceResponse> getValidClearancesForLivestock(UUID livestockId, Pageable pageable) {
+        Page<PoliceClearance> page = clearanceRepository.findValidClearancesForLivestock(livestockId, LocalDate.now(), pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get clearances for owner
+     * Get clearances for owner (paginated)
      */
     @Transactional(readOnly = true)
-    public List<ClearanceResponse> getClearancesByOwner(UUID ownerId) {
-        return clearanceRepository.findByOwnerId(ownerId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<ClearanceResponse> getClearancesByOwner(UUID ownerId, Pageable pageable) {
+        Page<PoliceClearance> page = clearanceRepository.findByOwnerId(ownerId, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get pending clearances
+     * Get pending clearances (paginated)
      */
     @Transactional(readOnly = true)
-    public List<ClearanceResponse> getPendingClearances() {
-        return clearanceRepository.findByStatusOrderByClearanceDateDesc(ClearanceStatus.PENDING).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<ClearanceResponse> getPendingClearances(Pageable pageable) {
+        Page<PoliceClearance> page = clearanceRepository.findByStatusOrderByClearanceDateDesc(ClearanceStatus.PENDING, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**

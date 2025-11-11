@@ -2,6 +2,9 @@ package zw.co.digistock.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,10 @@ public class OwnerService {
      * Register new owner
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "owners", allEntries = true),
+        @CacheEvict(value = "ownerPages", allEntries = true)
+    })
     public OwnerResponse registerOwner(RegisterOwnerRequest request) {
         log.info("Registering new owner: {} {}", request.getFirstName(), request.getLastName());
 
@@ -71,6 +78,10 @@ public class OwnerService {
      * Enroll owner fingerprint
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "owners", key = "#ownerId"),
+        @CacheEvict(value = "ownerPages", allEntries = true)
+    })
     public OwnerResponse enrollFingerprint(UUID ownerId, MultipartFile fingerprintImage) {
         log.info("Enrolling fingerprint for owner: {}", ownerId);
 
@@ -108,6 +119,10 @@ public class OwnerService {
      * Upload owner photo
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "owners", key = "#ownerId"),
+        @CacheEvict(value = "ownerPages", allEntries = true)
+    })
     public OwnerResponse uploadPhoto(UUID ownerId, MultipartFile photo) {
         log.info("Uploading photo for owner: {}", ownerId);
 
@@ -132,6 +147,7 @@ public class OwnerService {
      * Get owner by ID
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "owners", key = "#id")
     public OwnerResponse getOwnerById(UUID id) {
         Owner owner = ownerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Owner", "id", id));
@@ -142,6 +158,7 @@ public class OwnerService {
      * Get owner by national ID
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "owners", key = "'nationalId:' + #nationalId")
     public OwnerResponse getOwnerByNationalId(String nationalId) {
         Owner owner = ownerRepository.findByNationalId(nationalId)
             .orElseThrow(() -> new ResourceNotFoundException("Owner", "nationalId", nationalId));
@@ -152,6 +169,7 @@ public class OwnerService {
      * Get owners by district (paginated)
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "ownerPages", key = "'district:' + #district + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public Page<OwnerResponse> getOwnersByDistrict(String district, Pageable pageable) {
         Page<Owner> page = ownerRepository.findByDistrict(district, pageable);
         return page.map(this::mapToResponse);
@@ -161,6 +179,7 @@ public class OwnerService {
      * Search owners by name (paginated)
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "ownerPages", key = "'search:' + #searchTerm + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public Page<OwnerResponse> searchOwnersByName(String searchTerm, Pageable pageable) {
         Page<Owner> page = ownerRepository.searchByName(searchTerm, pageable);
         return page.map(this::mapToResponse);
@@ -170,6 +189,7 @@ public class OwnerService {
      * Get all owners (paginated)
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "ownerPages", key = "'all:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public Page<OwnerResponse> getAllOwners(Pageable pageable) {
         Page<Owner> page = ownerRepository.findAll(pageable);
         return page.map(this::mapToResponse);
@@ -179,6 +199,10 @@ public class OwnerService {
      * Update owner
      */
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "owners", key = "#id"),
+        @CacheEvict(value = "ownerPages", allEntries = true)
+    })
     public OwnerResponse updateOwner(UUID id, RegisterOwnerRequest request) {
         log.info("Updating owner: {}", id);
 

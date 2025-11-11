@@ -1,5 +1,7 @@
 package zw.co.digistock.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -23,31 +25,31 @@ public interface PoliceClearanceRepository extends JpaRepository<PoliceClearance
     Optional<PoliceClearance> findByClearanceNumber(String clearanceNumber);
 
     /**
-     * Find clearances for a specific livestock
+     * Find clearances for a specific livestock (paginated)
      */
-    List<PoliceClearance> findByLivestockId(UUID livestockId);
+    Page<PoliceClearance> findByLivestockId(UUID livestockId, Pageable pageable);
 
     /**
-     * Find clearances by owner
+     * Find clearances by owner (paginated)
      */
-    List<PoliceClearance> findByOwnerId(UUID ownerId);
+    Page<PoliceClearance> findByOwnerId(UUID ownerId, Pageable pageable);
 
     /**
-     * Find clearances by status
+     * Find clearances by status (paginated)
      */
-    List<PoliceClearance> findByStatus(ClearanceStatus status);
+    Page<PoliceClearance> findByStatus(ClearanceStatus status, Pageable pageable);
 
     /**
-     * Find clearances issued by a specific officer
+     * Find clearances issued by a specific officer (paginated)
      */
-    List<PoliceClearance> findByIssuedById(UUID officerId);
+    Page<PoliceClearance> findByIssuedById(UUID officerId, Pageable pageable);
 
     /**
-     * Find valid (approved and not expired) clearances for livestock
+     * Find valid (approved and not expired) clearances for livestock (paginated)
      */
     @Query("SELECT c FROM PoliceClearance c WHERE c.livestock.id = :livestockId " +
            "AND c.status = 'APPROVED' AND c.expiryDate >= :today ORDER BY c.clearanceDate DESC")
-    List<PoliceClearance> findValidClearancesForLivestock(UUID livestockId, LocalDate today);
+    Page<PoliceClearance> findValidClearancesForLivestock(UUID livestockId, LocalDate today, Pageable pageable);
 
     /**
      * Find most recent clearance for livestock
@@ -57,15 +59,15 @@ public interface PoliceClearanceRepository extends JpaRepository<PoliceClearance
     Optional<PoliceClearance> findLatestClearanceForLivestock(UUID livestockId);
 
     /**
-     * Find expired clearances
+     * Find expired clearances (paginated)
      */
     @Query("SELECT c FROM PoliceClearance c WHERE c.status = 'APPROVED' AND c.expiryDate < :today")
-    List<PoliceClearance> findExpiredClearances(LocalDate today);
+    Page<PoliceClearance> findExpiredClearances(LocalDate today, Pageable pageable);
 
     /**
-     * Find pending clearances
+     * Find pending clearances (paginated)
      */
-    List<PoliceClearance> findByStatusOrderByClearanceDateDesc(ClearanceStatus status);
+    Page<PoliceClearance> findByStatusOrderByClearanceDateDesc(ClearanceStatus status, Pageable pageable);
 
     /**
      * Check if clearance number exists
