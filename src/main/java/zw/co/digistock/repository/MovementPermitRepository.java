@@ -1,5 +1,7 @@
 package zw.co.digistock.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -23,54 +25,54 @@ public interface MovementPermitRepository extends JpaRepository<MovementPermit, 
     Optional<MovementPermit> findByPermitNumber(String permitNumber);
 
     /**
-     * Find permits for a specific livestock
+     * Find permits for a specific livestock (paginated)
      */
-    List<MovementPermit> findByLivestockId(UUID livestockId);
+    Page<MovementPermit> findByLivestockId(UUID livestockId, Pageable pageable);
 
     /**
-     * Find permits by status
+     * Find permits by status (paginated)
      */
-    List<MovementPermit> findByStatus(PermitStatus status);
+    Page<MovementPermit> findByStatus(PermitStatus status, Pageable pageable);
 
     /**
-     * Find permits issued by a specific officer
+     * Find permits issued by a specific officer (paginated)
      */
-    List<MovementPermit> findByIssuedById(UUID officerId);
+    Page<MovementPermit> findByIssuedById(UUID officerId, Pageable pageable);
 
     /**
-     * Find permits by clearance
+     * Find permits by clearance (paginated)
      */
-    List<MovementPermit> findByClearanceId(UUID clearanceId);
+    Page<MovementPermit> findByClearanceId(UUID clearanceId, Pageable pageable);
 
     /**
-     * Find valid (approved and not expired) permits
+     * Find valid (approved and not expired) permits (paginated)
      */
     @Query("SELECT p FROM MovementPermit p WHERE p.status = 'APPROVED' " +
            "AND p.validFrom <= :today AND p.validUntil >= :today")
-    List<MovementPermit> findValidPermits(LocalDate today);
+    Page<MovementPermit> findValidPermits(LocalDate today, Pageable pageable);
 
     /**
-     * Find expired permits
+     * Find expired permits (paginated)
      */
     @Query("SELECT p FROM MovementPermit p WHERE p.status = 'APPROVED' AND p.validUntil < :today")
-    List<MovementPermit> findExpiredPermits(LocalDate today);
+    Page<MovementPermit> findExpiredPermits(LocalDate today, Pageable pageable);
 
     /**
-     * Find permits in transit
+     * Find permits in transit (paginated)
      */
-    List<MovementPermit> findByStatusOrderByIssuedAtDesc(PermitStatus status);
+    Page<MovementPermit> findByStatusOrderByIssuedAtDesc(PermitStatus status, Pageable pageable);
 
     /**
-     * Find permits by destination district
+     * Find permits by destination district (paginated)
      */
     @Query("SELECT p FROM MovementPermit p WHERE p.toLocation LIKE %:district%")
-    List<MovementPermit> findByDestinationDistrict(String district);
+    Page<MovementPermit> findByDestinationDistrict(String district, Pageable pageable);
 
     /**
-     * Find recent permits (last 30 days)
+     * Find recent permits (last 30 days) - paginated
      */
     @Query("SELECT p FROM MovementPermit p WHERE p.issuedAt >= :since ORDER BY p.issuedAt DESC")
-    List<MovementPermit> findRecentPermits(java.time.LocalDateTime since);
+    Page<MovementPermit> findRecentPermits(java.time.LocalDateTime since, Pageable pageable);
 
     /**
      * Check if permit number exists

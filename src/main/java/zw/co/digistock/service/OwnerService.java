@@ -2,6 +2,8 @@ package zw.co.digistock.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -147,33 +149,30 @@ public class OwnerService {
     }
 
     /**
-     * Get owners by district
+     * Get owners by district (paginated)
      */
     @Transactional(readOnly = true)
-    public List<OwnerResponse> getOwnersByDistrict(String district) {
-        return ownerRepository.findByDistrict(district).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<OwnerResponse> getOwnersByDistrict(String district, Pageable pageable) {
+        Page<Owner> page = ownerRepository.findByDistrict(district, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Search owners by name
+     * Search owners by name (paginated)
      */
     @Transactional(readOnly = true)
-    public List<OwnerResponse> searchOwnersByName(String searchTerm) {
-        return ownerRepository.searchByName(searchTerm).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<OwnerResponse> searchOwnersByName(String searchTerm, Pageable pageable) {
+        Page<Owner> page = ownerRepository.searchByName(searchTerm, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get all owners
+     * Get all owners (paginated)
      */
     @Transactional(readOnly = true)
-    public List<OwnerResponse> getAllOwners() {
-        return ownerRepository.findAll().stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<OwnerResponse> getAllOwners(Pageable pageable) {
+        Page<Owner> page = ownerRepository.findAll(pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**

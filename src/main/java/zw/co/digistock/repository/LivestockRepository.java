@@ -1,5 +1,7 @@
 package zw.co.digistock.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -27,53 +29,53 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     List<Livestock> findByOwner(Owner owner);
 
     /**
-     * Find livestock by owner ID
+     * Find livestock by owner ID (paginated)
      */
-    List<Livestock> findByOwnerId(UUID ownerId);
+    Page<Livestock> findByOwnerId(UUID ownerId, Pageable pageable);
 
     /**
-     * Find livestock by breed
+     * Find livestock by breed (paginated)
      */
-    List<Livestock> findByBreed(String breed);
+    Page<Livestock> findByBreed(String breed, Pageable pageable);
 
     /**
-     * Find livestock by mother (offspring of a specific animal)
+     * Find livestock by mother (offspring of a specific animal) - paginated
      */
-    List<Livestock> findByMotherId(UUID motherId);
+    Page<Livestock> findByMotherId(UUID motherId, Pageable pageable);
 
     /**
-     * Find livestock by father (offspring of a specific animal)
+     * Find livestock by father (offspring of a specific animal) - paginated
      */
-    List<Livestock> findByFatherId(UUID fatherId);
+    Page<Livestock> findByFatherId(UUID fatherId, Pageable pageable);
 
     /**
-     * Find stolen livestock
+     * Find stolen livestock (paginated)
      */
-    List<Livestock> findByStolen(boolean stolen);
+    Page<Livestock> findByStolen(boolean stolen, Pageable pageable);
 
     /**
-     * Find stolen livestock in a specific district
+     * Find stolen livestock in a specific district (paginated)
      */
     @Query("SELECT l FROM Livestock l JOIN l.owner o WHERE l.stolen = true AND o.district = :district")
-    List<Livestock> findStolenByDistrict(String district);
+    Page<Livestock> findStolenByDistrict(String district, Pageable pageable);
 
     /**
-     * Search livestock by tag code pattern (e.g., "HA-02-*")
+     * Search livestock by tag code pattern (e.g., "HA-02-*") - paginated
      */
     @Query("SELECT l FROM Livestock l WHERE l.tagCode LIKE :pattern")
-    List<Livestock> findByTagCodePattern(String pattern);
+    Page<Livestock> findByTagCodePattern(String pattern, Pageable pageable);
 
     /**
-     * Find livestock registered in a specific province
+     * Find livestock registered in a specific province (paginated)
      */
     @Query("SELECT l FROM Livestock l JOIN l.owner o WHERE o.province = :province")
-    List<Livestock> findByProvince(String province);
+    Page<Livestock> findByProvince(String province, Pageable pageable);
 
     /**
-     * Find livestock registered in a specific district
+     * Find livestock registered in a specific district (paginated)
      */
     @Query("SELECT l FROM Livestock l JOIN l.owner o WHERE o.district = :district")
-    List<Livestock> findByDistrict(String district);
+    Page<Livestock> findByDistrict(String district, Pageable pageable);
 
     /**
      * Check if tag code already exists

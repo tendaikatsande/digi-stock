@@ -1,5 +1,7 @@
 package zw.co.digistock.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -26,26 +28,26 @@ public interface OwnerRepository extends JpaRepository<Owner, UUID> {
     Optional<Owner> findByPhoneNumber(String phoneNumber);
 
     /**
-     * Find owners by district
+     * Find owners by district (paginated)
      */
-    List<Owner> findByDistrict(String district);
+    Page<Owner> findByDistrict(String district, Pageable pageable);
 
     /**
-     * Find owners by province
+     * Find owners by province (paginated)
      */
-    List<Owner> findByProvince(String province);
+    Page<Owner> findByProvince(String province, Pageable pageable);
 
     /**
-     * Find owners with biometric enrollment
+     * Find owners with biometric enrollment (paginated)
      */
-    List<Owner> findByBiometricEnrolled(boolean enrolled);
+    Page<Owner> findByBiometricEnrolled(boolean enrolled, Pageable pageable);
 
     /**
-     * Search owners by name (case-insensitive)
+     * Search owners by name (case-insensitive) - paginated
      */
     @Query("SELECT o FROM Owner o WHERE LOWER(o.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "OR LOWER(o.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Owner> searchByName(String searchTerm);
+    Page<Owner> searchByName(String searchTerm, Pageable pageable);
 
     /**
      * Check if national ID already exists

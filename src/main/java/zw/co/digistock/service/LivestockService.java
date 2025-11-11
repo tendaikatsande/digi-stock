@@ -2,6 +2,8 @@ package zw.co.digistock.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -141,27 +143,30 @@ public class LivestockService {
     }
 
     /**
-     * Get all livestock for an owner
+     * Get all livestock for an owner (paginated)
      */
     @Transactional(readOnly = true)
-    public List<LivestockResponse> getLivestockByOwner(UUID ownerId) {
-        return livestockRepository.findByOwnerId(ownerId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<LivestockResponse> getLivestockByOwner(UUID ownerId, Pageable pageable) {
+        Page<Livestock> page = livestockRepository.findByOwnerId(ownerId, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get offspring of a livestock (by mother or father)
+     * Get offspring by mother (paginated)
      */
     @Transactional(readOnly = true)
-    public List<LivestockResponse> getOffspring(UUID livestockId) {
-        List<Livestock> offspring = livestockRepository.findByMotherId(livestockId);
-        offspring.addAll(livestockRepository.findByFatherId(livestockId));
+    public Page<LivestockResponse> getOffspringByMotherId(UUID livestockId, Pageable pageable) {
+        Page<Livestock> page = livestockRepository.findByMotherId(livestockId, pageable);
+        return page.map(this::mapToResponse);
+    }
 
-        return offspring.stream()
-            .distinct()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    /**
+     * Get offspring by father (paginated)
+     */
+    @Transactional(readOnly = true)
+    public Page<LivestockResponse> getOffspringByFatherId(UUID livestockId, Pageable pageable) {
+        Page<Livestock> page = livestockRepository.findByFatherId(livestockId, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
@@ -203,13 +208,12 @@ public class LivestockService {
     }
 
     /**
-     * Get stolen livestock
+     * Get stolen livestock (paginated)
      */
     @Transactional(readOnly = true)
-    public List<LivestockResponse> getStolenLivestock() {
-        return livestockRepository.findByStolen(true).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<LivestockResponse> getStolenLivestock(Pageable pageable) {
+        Page<Livestock> page = livestockRepository.findByStolen(true, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**

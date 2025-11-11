@@ -3,6 +3,8 @@ package zw.co.digistock.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import zw.co.digistock.domain.*;
@@ -249,33 +251,30 @@ public class MovementPermitService {
     }
 
     /**
-     * Get permits for livestock
+     * Get permits for livestock (paginated)
      */
     @Transactional(readOnly = true)
-    public List<PermitResponse> getPermitsByLivestock(UUID livestockId) {
-        return permitRepository.findByLivestockId(livestockId).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<PermitResponse> getPermitsByLivestock(UUID livestockId, Pageable pageable) {
+        Page<MovementPermit> page = permitRepository.findByLivestockId(livestockId, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get permits by status
+     * Get permits by status (paginated)
      */
     @Transactional(readOnly = true)
-    public List<PermitResponse> getPermitsByStatus(PermitStatus status) {
-        return permitRepository.findByStatusOrderByIssuedAtDesc(status).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<PermitResponse> getPermitsByStatus(PermitStatus status, Pageable pageable) {
+        Page<MovementPermit> page = permitRepository.findByStatusOrderByIssuedAtDesc(status, pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
-     * Get valid permits
+     * Get valid permits (paginated)
      */
     @Transactional(readOnly = true)
-    public List<PermitResponse> getValidPermits() {
-        return permitRepository.findValidPermits(LocalDate.now()).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    public Page<PermitResponse> getValidPermits(Pageable pageable) {
+        Page<MovementPermit> page = permitRepository.findValidPermits(LocalDate.now(), pageable);
+        return page.map(this::mapToResponse);
     }
 
     /**
