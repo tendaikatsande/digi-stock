@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: digistock-backend-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  liquibase:
+    enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 15MB
+
+# MinIO Configuration for Tests
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  buckets:
+    livestock-photos: test-livestock-photos
+    fingerprints: test-fingerprints
+    permits: test-permits
+    clearances: test-clearances
+    qr-codes: test-qr-codes
+
+# SourceAFIS Configuration for Tests
+sourceafis:
+  match-threshold: 40.0
+  enable-caching: false
+  cache-size: 100
+
+# DigiStock Business Configuration
+digistock:
+  permit:
+    default-validity-days: 7
+  clearance:
+    default-validity-days: 14
+  qr:
+    size: 300
+  sync:
+    conflict-resolution: SERVER_AUTHORITATIVE
+
+# Logging
+logging:
+  level:
+    root: INFO
+    zw.co.digistock: DEBUG
