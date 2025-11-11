@@ -3,6 +3,10 @@ package zw.co.digistock.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +14,7 @@ import zw.co.digistock.domain.enums.PermitStatus;
 import zw.co.digistock.dto.request.CreatePermitRequest;
 import zw.co.digistock.dto.response.PermitResponse;
 import zw.co.digistock.service.MovementPermitService;
+import zw.co.digistock.util.Constants;
 
 import java.util.List;
 import java.util.UUID;
@@ -100,32 +105,64 @@ public class MovementPermitController {
     }
 
     /**
-     * Get permits for livestock
+     * Get permits for livestock (paginated)
      */
     @GetMapping("/livestock/{livestockId}")
-    public ResponseEntity<List<PermitResponse>> getPermitsByLivestock(@PathVariable UUID livestockId) {
-        log.info("GET /api/v1/permits/livestock/{}", livestockId);
-        List<PermitResponse> response = permitService.getPermitsByLivestock(livestockId);
+    public ResponseEntity<Page<PermitResponse>> getPermitsByLivestock(
+            @PathVariable UUID livestockId,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = "issuedAt") String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/permits/livestock/{} (page: {}, size: {})", livestockId, page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<PermitResponse> response = permitService.getPermitsByLivestock(livestockId, pageable);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Get permits by status
+     * Get permits by status (paginated)
      */
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<PermitResponse>> getPermitsByStatus(@PathVariable PermitStatus status) {
-        log.info("GET /api/v1/permits/status/{}", status);
-        List<PermitResponse> response = permitService.getPermitsByStatus(status);
+    public ResponseEntity<Page<PermitResponse>> getPermitsByStatus(
+            @PathVariable PermitStatus status,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = "issuedAt") String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/permits/status/{} (page: {}, size: {})", status, page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<PermitResponse> response = permitService.getPermitsByStatus(status, pageable);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Get valid permits
+     * Get valid permits (paginated)
      */
     @GetMapping("/valid")
-    public ResponseEntity<List<PermitResponse>> getValidPermits() {
-        log.info("GET /api/v1/permits/valid");
-        List<PermitResponse> response = permitService.getValidPermits();
+    public ResponseEntity<Page<PermitResponse>> getValidPermits(
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = "issuedAt") String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/permits/valid (page: {}, size: {})", page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<PermitResponse> response = permitService.getValidPermits(pageable);
         return ResponseEntity.ok(response);
     }
 }

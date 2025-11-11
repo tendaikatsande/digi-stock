@@ -15,10 +15,26 @@ public final class Constants {
     // Pagination Defaults
     public static final int DEFAULT_PAGE_SIZE = 20;
     public static final int MAX_PAGE_SIZE = 100;
+    public static final int MIN_PAGE_SIZE = 1;
     public static final String DEFAULT_PAGE_NUMBER = "0";
     public static final String DEFAULT_PAGE_SIZE_STR = "20";
     public static final String DEFAULT_SORT_BY = "createdAt";
     public static final String DEFAULT_SORT_DIRECTION = "DESC";
+
+    /**
+     * Validates and adjusts page size to be within acceptable limits.
+     * Returns DEFAULT_PAGE_SIZE if size is less than MIN_PAGE_SIZE.
+     * Returns MAX_PAGE_SIZE if size exceeds MAX_PAGE_SIZE.
+     *
+     * @param size the requested page size
+     * @return validated page size within acceptable range
+     */
+    public static int validatePageSize(int size) {
+        if (size < MIN_PAGE_SIZE) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(size, MAX_PAGE_SIZE);
+    }
 
     // Date Formats
     public static final String DATE_FORMAT = "yyyy-MM-dd";

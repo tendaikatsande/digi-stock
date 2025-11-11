@@ -3,6 +3,10 @@ package zw.co.digistock.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import zw.co.digistock.dto.request.RegisterOwnerRequest;
 import zw.co.digistock.dto.response.OwnerResponse;
 import zw.co.digistock.service.OwnerService;
+import zw.co.digistock.util.Constants;
 
 import java.util.List;
 import java.util.UUID;
@@ -81,33 +86,64 @@ public class OwnerController {
     }
 
     /**
-     * Get owners by district
+     * Get owners by district (paginated)
      */
     @GetMapping("/district/{district}")
-    public ResponseEntity<List<OwnerResponse>> getOwnersByDistrict(@PathVariable String district) {
-        log.info("GET /api/v1/owners/district/{}", district);
-        List<OwnerResponse> response = ownerService.getOwnersByDistrict(district);
+    public ResponseEntity<Page<OwnerResponse>> getOwnersByDistrict(
+            @PathVariable String district,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/owners/district/{} (page: {}, size: {})", district, page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<OwnerResponse> response = ownerService.getOwnersByDistrict(district, pageable);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Search owners by name
+     * Search owners by name (paginated)
      */
     @GetMapping("/search")
-    public ResponseEntity<List<OwnerResponse>> searchOwners(
-            @RequestParam("q") String searchTerm) {
-        log.info("GET /api/v1/owners/search?q={}", searchTerm);
-        List<OwnerResponse> response = ownerService.searchOwnersByName(searchTerm);
+    public ResponseEntity<Page<OwnerResponse>> searchOwners(
+            @RequestParam("q") String searchTerm,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/owners/search?q={} (page: {}, size: {})", searchTerm, page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<OwnerResponse> response = ownerService.searchOwnersByName(searchTerm, pageable);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Get all owners
+     * Get all owners (paginated)
      */
     @GetMapping
-    public ResponseEntity<List<OwnerResponse>> getAllOwners() {
-        log.info("GET /api/v1/owners");
-        List<OwnerResponse> response = ownerService.getAllOwners();
+    public ResponseEntity<Page<OwnerResponse>> getAllOwners(
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+        log.info("GET /api/v1/owners (page: {}, size: {})", page, size);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+            ? Sort.by(sortBy).ascending()
+            : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<OwnerResponse> response = ownerService.getAllOwners(pageable);
         return ResponseEntity.ok(response);
     }
 
