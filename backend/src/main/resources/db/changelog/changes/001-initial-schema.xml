@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Enable UUID extension for PostgreSQL -->
+    <changeSet id="001-enable-uuid-extension" author="digistock">
+        <sql>CREATE EXTENSION IF NOT EXISTS "uuid-ossp";</sql>
+    </changeSet>
+
+    <!-- Create owners table -->
+    <changeSet id="002-create-owners-table" author="digistock">
+        <createTable tableName="owners">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="national_id" type="varchar(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone_number" type="varchar(20)"/>
+            <column name="email" type="varchar(100)"/>
+            <column name="address" type="text"/>
+            <column name="ward" type="varchar(100)"/>
+            <column name="district" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="province" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="photo_ref" type="varchar(500)"/>
+            <column name="biometric_enrolled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create owner_fingerprint_refs table -->
+    <changeSet id="003-create-owner-fingerprint-refs-table" author="digistock">
+        <createTable tableName="owner_fingerprint_refs">
+            <column name="owner_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_owner_fingerprint_refs_owner"
+                             references="owners(id)" deleteCascade="true"/>
+            </column>
+            <column name="fingerprint_ref" type="varchar(500)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create officers table -->
+    <changeSet id="004-create-officers-table" author="digistock">
+        <createTable tableName="officers">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="officer_code" type="varchar(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="province" type="varchar(100)"/>
+            <column name="district" type="varchar(100)"/>
+            <column name="email" type="varchar(100)">
+                <constraints unique="true"/>
+            </column>
+            <column name="phone_number" type="varchar(20)"/>
+            <column name="password_hash" type="varchar(255)"/>
+            <column name="photo_ref" type="varchar(500)"/>
+            <column name="biometric_enrolled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create officer_fingerprint_refs table -->
+    <changeSet id="005-create-officer-fingerprint-refs-table" author="digistock">
+        <createTable tableName="officer_fingerprint_refs">
+            <column name="officer_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_officer_fingerprint_refs_officer"
+                             references="officers(id)" deleteCascade="true"/>
+            </column>
+            <column name="fingerprint_ref" type="varchar(500)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create livestock table -->
+    <changeSet id="006-create-livestock-table" author="digistock">
+        <createTable tableName="livestock">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tag_code" type="varchar(32)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)"/>
+            <column name="breed" type="varchar(100)"/>
+            <column name="sex" type="varchar(10)"/>
+            <column name="birth_date" type="date"/>
+            <column name="color" type="varchar(100)"/>
+            <column name="distinguishing_marks" type="text"/>
+            <column name="owner_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_livestock_owner"
+                             references="owners(id)"/>
+            </column>
+            <column name="mother_id" type="uuid">
+                <constraints foreignKeyName="fk_livestock_mother"
+                             references="livestock(id)"/>
+            </column>
+            <column name="father_id" type="uuid">
+                <constraints foreignKeyName="fk_livestock_father"
+                             references="livestock(id)"/>
+            </column>
+            <column name="registration_latitude" type="double precision"/>
+            <column name="registration_longitude" type="double precision"/>
+            <column name="is_stolen" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stolen_date" type="date"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create livestock_photos table -->
+    <changeSet id="007-create-livestock-photos-table" author="digistock">
+        <createTable tableName="livestock_photos">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="livestock_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_livestock_photo_livestock"
+                             references="livestock(id)" deleteCascade="true"/>
+            </column>
+            <column name="photo_ref" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="photo_type" type="varchar(50)"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create police_clearances table -->
+    <changeSet id="008-create-police-clearances-table" author="digistock">
+        <createTable tableName="police_clearances">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="clearance_number" type="varchar(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="livestock_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_clearance_livestock"
+                             references="livestock(id)"/>
+            </column>
+            <column name="owner_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_clearance_owner"
+                             references="owners(id)"/>
+            </column>
+            <column name="issued_by" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_clearance_issued_by"
+                             references="officers(id)"/>
+            </column>
+            <column name="officer_fingerprint_ref" type="varchar(500)"/>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rejection_reason" type="text"/>
+            <column name="clearance_date" type="timestamp with time zone"/>
+            <column name="expiry_date" type="date"/>
+            <column name="pdf_ref" type="varchar(500)"/>
+            <column name="qr_ref" type="varchar(500)"/>
+            <column name="issue_latitude" type="double precision"/>
+            <column name="issue_longitude" type="double precision"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create movement_permits table -->
+    <changeSet id="009-create-movement-permits-table" author="digistock">
+        <createTable tableName="movement_permits">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="permit_number" type="varchar(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="clearance_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_permit_clearance"
+                             references="police_clearances(id)"/>
+            </column>
+            <column name="livestock_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_permit_livestock"
+                             references="livestock(id)"/>
+            </column>
+            <column name="from_location" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_location" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purpose" type="text"/>
+            <column name="transport_mode" type="varchar(100)"/>
+            <column name="vehicle_number" type="varchar(50)"/>
+            <column name="driver_name" type="varchar(200)"/>
+            <column name="issued_by" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_permit_issued_by"
+                             references="officers(id)"/>
+            </column>
+            <column name="issued_at" type="timestamp with time zone"/>
+            <column name="valid_from" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_until" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="qr_ref" type="varchar(500)"/>
+            <column name="pdf_ref" type="varchar(500)"/>
+            <column name="signed_fingerprint_ref" type="varchar(500)"/>
+            <column name="issue_latitude" type="double precision"/>
+            <column name="issue_longitude" type="double precision"/>
+            <column name="completion_latitude" type="double precision"/>
+            <column name="completion_longitude" type="double precision"/>
+            <column name="completed_at" type="timestamp with time zone"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Create permit_verifications table -->
+    <changeSet id="010-create-permit-verifications-table" author="digistock">
+        <createTable tableName="permit_verifications">
+            <column name="id" type="uuid" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="permit_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_verification_permit"
+                             references="movement_permits(id)" deleteCascade="true"/>
+            </column>
+            <column name="verified_by" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_verification_officer"
+                             references="officers(id)"/>
+            </column>
+            <column name="verified_at" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verification_latitude" type="double precision"/>
+            <column name="verification_longitude" type="double precision"/>
+            <column name="location_description" type="text"/>
+            <column name="notes" type="text"/>
+            <column name="is_valid" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flag_reason" type="text"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
