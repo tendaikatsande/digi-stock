@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Create default admin officer -->
+    <changeSet id="030-create-default-admin" author="digistock">
+        <insert tableName="officers">
+            <column name="id" valueComputed="uuid_generate_v4()"/>
+            <column name="officer_code" value="ADMIN-001"/>
+            <column name="first_name" value="System"/>
+            <column name="last_name" value="Administrator"/>
+            <column name="role" value="ADMIN"/>
+            <column name="email" value="admin@digistock.zw"/>
+            <!-- Password: Admin@123 (bcrypt hashed) - CHANGE IN PRODUCTION! -->
+            <column name="password_hash" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="biometric_enrolled" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+    <!-- NOTE: Add province/district reference data as needed -->
+
+</databaseChangeLog>

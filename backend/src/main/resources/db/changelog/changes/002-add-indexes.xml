@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Owners indexes -->
+    <changeSet id="020-create-owner-indexes" author="digistock">
+        <createIndex tableName="owners" indexName="idx_owner_national_id">
+            <column name="national_id"/>
+        </createIndex>
+        <createIndex tableName="owners" indexName="idx_owner_phone">
+            <column name="phone_number"/>
+        </createIndex>
+        <createIndex tableName="owners" indexName="idx_owner_district">
+            <column name="district"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Officers indexes -->
+    <changeSet id="021-create-officer-indexes" author="digistock">
+        <createIndex tableName="officers" indexName="idx_officer_code">
+            <column name="officer_code"/>
+        </createIndex>
+        <createIndex tableName="officers" indexName="idx_officer_email">
+            <column name="email"/>
+        </createIndex>
+        <createIndex tableName="officers" indexName="idx_officer_district">
+            <column name="district"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Livestock indexes -->
+    <changeSet id="022-create-livestock-indexes" author="digistock">
+        <createIndex tableName="livestock" indexName="idx_livestock_tag_code" unique="true">
+            <column name="tag_code"/>
+        </createIndex>
+        <createIndex tableName="livestock" indexName="idx_livestock_owner">
+            <column name="owner_id"/>
+        </createIndex>
+        <createIndex tableName="livestock" indexName="idx_livestock_mother">
+            <column name="mother_id"/>
+        </createIndex>
+        <createIndex tableName="livestock" indexName="idx_livestock_father">
+            <column name="father_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Livestock photos indexes -->
+    <changeSet id="023-create-livestock-photo-indexes" author="digistock">
+        <createIndex tableName="livestock_photos" indexName="idx_livestock_photo_livestock">
+            <column name="livestock_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Police clearances indexes -->
+    <changeSet id="024-create-clearance-indexes" author="digistock">
+        <createIndex tableName="police_clearances" indexName="idx_clearance_number" unique="true">
+            <column name="clearance_number"/>
+        </createIndex>
+        <createIndex tableName="police_clearances" indexName="idx_clearance_livestock">
+            <column name="livestock_id"/>
+        </createIndex>
+        <createIndex tableName="police_clearances" indexName="idx_clearance_owner">
+            <column name="owner_id"/>
+        </createIndex>
+        <createIndex tableName="police_clearances" indexName="idx_clearance_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Movement permits indexes -->
+    <changeSet id="025-create-permit-indexes" author="digistock">
+        <createIndex tableName="movement_permits" indexName="idx_permit_number" unique="true">
+            <column name="permit_number"/>
+        </createIndex>
+        <createIndex tableName="movement_permits" indexName="idx_permit_livestock">
+            <column name="livestock_id"/>
+        </createIndex>
+        <createIndex tableName="movement_permits" indexName="idx_permit_clearance">
+            <column name="clearance_id"/>
+        </createIndex>
+        <createIndex tableName="movement_permits" indexName="idx_permit_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Permit verifications indexes -->
+    <changeSet id="026-create-verification-indexes" author="digistock">
+        <createIndex tableName="permit_verifications" indexName="idx_verification_permit">
+            <column name="permit_id"/>
+        </createIndex>
+        <createIndex tableName="permit_verifications" indexName="idx_verification_officer">
+            <column name="verified_by"/>
+        </createIndex>
+        <createIndex tableName="permit_verifications" indexName="idx_verification_time">
+            <column name="verified_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
