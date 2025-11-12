@@ -12,6 +12,7 @@ import zw.co.digistock.domain.Livestock;
 import zw.co.digistock.domain.LivestockPhoto;
 import zw.co.digistock.domain.Owner;
 import zw.co.digistock.dto.request.RegisterLivestockRequest;
+import zw.co.digistock.dto.request.UpdateLivestockRequest;
 import zw.co.digistock.dto.response.LivestockResponse;
 import zw.co.digistock.exception.BusinessException;
 import zw.co.digistock.exception.DuplicateResourceException;
@@ -223,6 +224,48 @@ public class LivestockService {
     public Page<LivestockResponse> getStolenLivestock(Pageable pageable) {
         Page<Livestock> page = livestockRepository.findByStolen(true, pageable);
         return page.map(this::mapToResponse);
+    }
+
+    /**
+     * Update livestock information (limited fields)
+     * Only descriptive fields can be updated. Tag code, owner, and parentage are immutable.
+     */
+    @Transactional
+    public LivestockResponse updateLivestock(UUID livestockId, UpdateLivestockRequest request) {
+        log.info("Updating livestock: {}", livestockId);
+
+        Livestock livestock = livestockRepository.findById(livestockId)
+            .orElseThrow(() -> new ResourceNotFoundException("Livestock", "id", livestockId));
+
+        // Update fields if provided
+        if (request.getName() != null) {
+            livestock.setName(request.getName());
+        }
+
+        if (request.getBreed() != null) {
+            livestock.setBreed(request.getBreed());
+        }
+
+        if (request.getSex() != null) {
+            livestock.setSex(request.getSex());
+        }
+
+        if (request.getBirthDate() != null) {
+            livestock.setBirthDate(request.getBirthDate());
+        }
+
+        if (request.getColor() != null) {
+            livestock.setColor(request.getColor());
+        }
+
+        if (request.getDistinguishingMarks() != null) {
+            livestock.setDistinguishingMarks(request.getDistinguishingMarks());
+        }
+
+        Livestock updated = livestockRepository.save(livestock);
+        log.info("Successfully updated livestock: {}", updated.getTagCode());
+
+        return mapToResponse(updated);
     }
 
     /**
