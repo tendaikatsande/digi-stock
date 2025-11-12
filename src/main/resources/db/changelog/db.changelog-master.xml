@@ -9,5 +9,6 @@
     <include file="db/changelog/changes/002-add-indexes.xml"/>
     <include file="db/changelog/changes/003-seed-data.xml"/>
     <include file="db/changelog/changes/004-add-password-reset-fields.xml"/>
+    <include file="db/changelog/changes/005-create-administrative-divisions.xml"/>
 
 </databaseChangeLog>

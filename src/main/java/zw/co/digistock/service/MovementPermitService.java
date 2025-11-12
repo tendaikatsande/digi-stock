@@ -278,6 +278,15 @@ public class MovementPermitService {
     }
 
     /**
+     * Get all permits (paginated)
+     */
+    @Transactional(readOnly = true)
+    public Page<PermitResponse> getAllPermits(Pageable pageable) {
+        Page<MovementPermit> page = permitRepository.findAll(pageable);
+        return page.map(this::mapToResponse);
+    }
+
+    /**
      * Generate permit number
      * Format: DG-{YEAR}-{SEQUENTIAL}
      */

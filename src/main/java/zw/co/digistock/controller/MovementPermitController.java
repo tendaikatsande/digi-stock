@@ -152,4 +152,16 @@ public class MovementPermitController {
         Page<PermitResponse> response = permitService.getValidPermits(pageable);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Get all permits (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    public ResponseEntity<Page<PermitResponse>> getAllPermits(Pageable pageable) {
+        log.info("GET /api/v1/permits");
+        Page<PermitResponse> response = permitService.getAllPermits(pageable);
+        return ResponseEntity.ok(response);
+    }
 }
