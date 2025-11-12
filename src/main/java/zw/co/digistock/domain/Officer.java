@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 import zw.co.digistock.domain.base.BaseEntity;
 import zw.co.digistock.domain.enums.UserRole;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +83,18 @@ public class Officer extends BaseEntity {
      */
     @Column(name = "active", nullable = false)
     private boolean active = true;
+
+    /**
+     * Password reset token (hashed)
+     */
+    @Column(name = "reset_token", length = 255)
+    private String resetToken;
+
+    /**
+     * Reset token expiry timestamp
+     */
+    @Column(name = "reset_token_expires_at")
+    private LocalDateTime resetTokenExpiresAt;
 
     /**
      * Clearances issued by this officer (if POLICE_OFFICER)

@@ -13,10 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import zw.co.digistock.dto.request.LoginRequest;
-import zw.co.digistock.dto.request.RegisterOfficerRequest;
+import zw.co.digistock.dto.request.*;
 import zw.co.digistock.dto.response.AuthResponse;
+import zw.co.digistock.dto.response.MessageResponse;
 import zw.co.digistock.service.AuthService;
+import zw.co.digistock.security.JwtUtil;
+
+import java.util.UUID;
 
 /**
  * Controller for authentication endpoints
@@ -38,6 +41,7 @@ import zw.co.digistock.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtUtil jwtUtil;
 
     /**
      * Authenticate officer and get JWT token
@@ -225,6 +229,210 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterOfficerRequest request) {
         log.info("POST /api/v1/auth/register - Registration request for: {}", request.getEmail());
         AuthResponse response = authService.register(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Forgot password - Request password reset
+     */
+    @PostMapping("/forgot-password")
+    @Operation(
+        summary = "Forgot password",
+        description = """
+            Request a password reset by providing your email address.
+
+            **Password Reset Flow:**
+            1. Enter your email address
+            2. Receive a reset token (in production, this would be sent via email)
+            3. Use the token with the `/reset-password` endpoint to set a new password
+            4. Token expires in 1 hour
+
+            **Note:** This endpoint does not require authentication.
+            """,
+        security = {} // Exclude from global security requirement
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Password reset email sent (in production)",
+            content = @Content(
+                schema = @Schema(implementation = MessageResponse.class),
+                examples = @ExampleObject(
+                    name = "Reset initiated",
+                    value = """
+                        {
+                          "message": "Password reset instructions have been sent to your email. The reset link is valid for 1 hour.",
+                          "success": true
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Email not found",
+            content = @Content(
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "timestamp": "2025-01-15T10:30:00",
+                          "status": 404,
+                          "error": "Not Found",
+                          "message": "No account found with email: user@example.com",
+                          "path": "/api/v1/auth/forgot-password"
+                        }
+                        """
+                )
+            )
+        )
+    })
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        log.info("POST /api/v1/auth/forgot-password - Password reset requested for: {}", request.getEmail());
+        MessageResponse response = authService.forgotPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Reset password using token
+     */
+    @PostMapping("/reset-password")
+    @Operation(
+        summary = "Reset password",
+        description = """
+            Reset your password using the token received from the forgot password process.
+
+            **Steps:**
+            1. Call `/forgot-password` with your email
+            2. Receive reset token (via email in production)
+            3. Call this endpoint with token and new password
+            4. Token must be used within 1 hour
+
+            **Note:** This endpoint does not require authentication.
+            """,
+        security = {} // Exclude from global security requirement
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Password successfully reset",
+            content = @Content(
+                schema = @Schema(implementation = MessageResponse.class),
+                examples = @ExampleObject(
+                    name = "Reset successful",
+                    value = """
+                        {
+                          "message": "Password has been successfully reset. You can now login with your new password.",
+                          "success": true
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid or expired token, or passwords don't match",
+            content = @Content(
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "timestamp": "2025-01-15T10:30:00",
+                          "status": 400,
+                          "error": "Bad Request",
+                          "message": "Invalid or expired reset token",
+                          "path": "/api/v1/auth/reset-password"
+                        }
+                        """
+                )
+            )
+        )
+    })
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("POST /api/v1/auth/reset-password - Password reset attempt with token");
+        MessageResponse response = authService.resetPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Change password for authenticated user
+     */
+    @PostMapping("/change-password")
+    @Operation(
+        summary = "Change password",
+        description = """
+            Change your password when already authenticated.
+
+            **Requirements:**
+            1. Must be authenticated (provide valid JWT token)
+            2. Must provide correct current password
+            3. New password must be different from current password
+            4. New passwords must match
+
+            **Note:** This endpoint REQUIRES authentication (Bearer token).
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Password successfully changed",
+            content = @Content(
+                schema = @Schema(implementation = MessageResponse.class),
+                examples = @ExampleObject(
+                    name = "Change successful",
+                    value = """
+                        {
+                          "message": "Password has been successfully changed.",
+                          "success": true
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Current password incorrect or validation failed",
+            content = @Content(
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "timestamp": "2025-01-15T10:30:00",
+                          "status": 400,
+                          "error": "Bad Request",
+                          "message": "Current password is incorrect",
+                          "path": "/api/v1/auth/change-password"
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - Invalid or missing JWT token",
+            content = @Content(
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "timestamp": "2025-01-15T10:30:00",
+                          "status": 401,
+                          "error": "Unauthorized",
+                          "message": "Full authentication is required to access this resource",
+                          "path": "/api/v1/auth/change-password"
+                        }
+                        """
+                )
+            )
+        )
+    })
+    public ResponseEntity<MessageResponse> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        log.info("POST /api/v1/auth/change-password - Password change request");
+
+        // Extract officer ID from JWT token
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtUtil.extractUsername(token);
+        UUID officerId = UUID.fromString(jwtUtil.extractClaim(token, claims -> claims.get("officerId", String.class)));
+
+        MessageResponse response = authService.changePassword(officerId, request);
         return ResponseEntity.ok(response);
     }
 }

@@ -100,6 +100,58 @@ public class OpenApiConfig {
                     - **Email:** admin@digistock.zw
                     - **Password:** Admin@123
 
+                    ## Password Management
+
+                    ### Forgot Password
+                    **POST** `/api/v1/auth/forgot-password`
+
+                    If you forgot your password, request a password reset:
+                    1. Provide your email address
+                    2. Receive a reset token (in production, sent via email)
+                    3. Token is valid for 1 hour
+
+                    **Example Request:**
+                    ```json
+                    {
+                      "email": "john.doe@agritex.gov.zw"
+                    }
+                    ```
+
+                    ### Reset Password
+                    **POST** `/api/v1/auth/reset-password`
+
+                    Use the reset token to set a new password:
+
+                    **Example Request:**
+                    ```json
+                    {
+                      "token": "abc123xyz789",
+                      "newPassword": "NewSecure123!",
+                      "confirmPassword": "NewSecure123!"
+                    }
+                    ```
+
+                    ### Change Password (Authenticated)
+                    **POST** `/api/v1/auth/change-password`
+
+                    Change your password when already logged in. Requires authentication.
+
+                    **Example Request:**
+                    ```json
+                    {
+                      "currentPassword": "OldPassword123!",
+                      "newPassword": "NewSecure123!",
+                      "confirmPassword": "NewSecure123!"
+                    }
+                    ```
+
+                    **Password Requirements:**
+                    - Minimum 8 characters
+                    - At least one uppercase letter
+                    - At least one lowercase letter
+                    - At least one digit
+                    - At least one special character (@$!%*?&)
+
                     ## Pagination
                     All list endpoints support pagination with the following query parameters:
                     - `page`: Page number (0-indexed, default: 0)
