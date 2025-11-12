@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zw.co.digistock.dto.request.RegisterOwnerRequest;
@@ -32,8 +33,10 @@ public class OwnerController {
 
     /**
      * Register new owner
+     * Only AGRITEX officers and admins can register owners
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> registerOwner(
             @Valid @RequestBody RegisterOwnerRequest request) {
         log.info("POST /api/v1/owners - Register new owner");
@@ -43,8 +46,10 @@ public class OwnerController {
 
     /**
      * Enroll owner fingerprint
+     * Only AGRITEX officers and admins can enroll fingerprints
      */
     @PostMapping("/{id}/fingerprint")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> enrollFingerprint(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile fingerprintImage) {
@@ -55,8 +60,10 @@ public class OwnerController {
 
     /**
      * Upload owner photo
+     * Only AGRITEX officers and admins can upload photos
      */
     @PostMapping("/{id}/photo")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> uploadPhoto(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile photo) {
@@ -67,8 +74,10 @@ public class OwnerController {
 
     /**
      * Get owner by ID
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> getOwnerById(@PathVariable UUID id) {
         log.info("GET /api/v1/owners/{}", id);
         OwnerResponse response = ownerService.getOwnerById(id);
@@ -77,8 +86,10 @@ public class OwnerController {
 
     /**
      * Get owner by national ID
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/national-id/{nationalId}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> getOwnerByNationalId(@PathVariable String nationalId) {
         log.info("GET /api/v1/owners/national-id/{}", nationalId);
         OwnerResponse response = ownerService.getOwnerByNationalId(nationalId);
@@ -87,8 +98,10 @@ public class OwnerController {
 
     /**
      * Get owners by district (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/district/{district}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<OwnerResponse>> getOwnersByDistrict(
             @PathVariable String district,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
@@ -108,8 +121,10 @@ public class OwnerController {
 
     /**
      * Search owners by name (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<OwnerResponse>> searchOwners(
             @RequestParam("q") String searchTerm,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
@@ -129,8 +144,10 @@ public class OwnerController {
 
     /**
      * Get all owners (paginated)
+     * Accessible by AGRITEX officers and admins
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<OwnerResponse>> getAllOwners(
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
@@ -149,8 +166,10 @@ public class OwnerController {
 
     /**
      * Update owner
+     * Only AGRITEX officers and admins can update owners
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<OwnerResponse> updateOwner(
             @PathVariable UUID id,
             @Valid @RequestBody RegisterOwnerRequest request) {

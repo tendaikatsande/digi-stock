@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zw.co.digistock.dto.request.RegisterLivestockRequest;
@@ -32,8 +33,10 @@ public class LivestockController {
 
     /**
      * Register new livestock
+     * Only AGRITEX officers and admins can register livestock
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> registerLivestock(
             @Valid @RequestBody RegisterLivestockRequest request) {
         log.info("POST /api/v1/livestock - Register new livestock: {}", request.getTagCode());
@@ -43,8 +46,10 @@ public class LivestockController {
 
     /**
      * Upload photo for livestock
+     * Only AGRITEX officers and admins can upload photos
      */
     @PostMapping("/{id}/photos")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> uploadPhoto(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
@@ -57,8 +62,10 @@ public class LivestockController {
 
     /**
      * Get livestock by ID
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> getLivestockById(@PathVariable UUID id) {
         log.info("GET /api/v1/livestock/{}", id);
         LivestockResponse response = livestockService.getLivestockById(id);
@@ -67,8 +74,10 @@ public class LivestockController {
 
     /**
      * Get livestock by tag code
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/tag/{tagCode}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> getLivestockByTagCode(@PathVariable String tagCode) {
         log.info("GET /api/v1/livestock/tag/{}", tagCode);
         LivestockResponse response = livestockService.getLivestockByTagCode(tagCode);
@@ -77,8 +86,10 @@ public class LivestockController {
 
     /**
      * Get livestock by owner (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/owner/{ownerId}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getLivestockByOwner(
             @PathVariable UUID ownerId,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
@@ -98,8 +109,10 @@ public class LivestockController {
 
     /**
      * Get offspring by mother (paginated)
+     * Accessible by AGRITEX officers and admins
      */
     @GetMapping("/{id}/offspring/mother")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByMother(
             @PathVariable UUID id,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
@@ -119,8 +132,10 @@ public class LivestockController {
 
     /**
      * Get offspring by father (paginated)
+     * Accessible by AGRITEX officers and admins
      */
     @GetMapping("/{id}/offspring/father")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByFather(
             @PathVariable UUID id,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
@@ -140,8 +155,10 @@ public class LivestockController {
 
     /**
      * Mark livestock as stolen
+     * Only police officers and admins can mark livestock as stolen
      */
     @PostMapping("/{id}/mark-stolen")
+    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> markAsStolen(@PathVariable UUID id) {
         log.info("POST /api/v1/livestock/{}/mark-stolen", id);
         LivestockResponse response = livestockService.markAsStolen(id);
@@ -150,8 +167,10 @@ public class LivestockController {
 
     /**
      * Mark livestock as recovered
+     * Only police officers and admins can mark livestock as recovered
      */
     @PostMapping("/{id}/mark-recovered")
+    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<LivestockResponse> markAsRecovered(@PathVariable UUID id) {
         log.info("POST /api/v1/livestock/{}/mark-recovered", id);
         LivestockResponse response = livestockService.markAsRecovered(id);
@@ -160,8 +179,10 @@ public class LivestockController {
 
     /**
      * Get stolen livestock (paginated)
+     * Accessible by police officers and admins
      */
     @GetMapping("/stolen")
+    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getStolenLivestock(
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
             @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
