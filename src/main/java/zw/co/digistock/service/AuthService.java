@@ -11,16 +11,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import zw.co.digistock.domain.Officer;
-import zw.co.digistock.dto.request.LoginRequest;
-import zw.co.digistock.dto.request.RegisterOfficerRequest;
+import zw.co.digistock.dto.request.*;
 import zw.co.digistock.dto.response.AuthResponse;
+import zw.co.digistock.dto.response.MessageResponse;
 import zw.co.digistock.exception.BusinessException;
 import zw.co.digistock.exception.DuplicateResourceException;
+import zw.co.digistock.exception.ResourceNotFoundException;
 import zw.co.digistock.repository.OfficerRepository;
 import zw.co.digistock.security.JwtUtil;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Service for authentication operations
@@ -35,6 +38,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final EmailService emailService;
 
     /**
      * Authenticate officer and return JWT token
@@ -121,7 +125,129 @@ public class AuthService {
 
         log.info("Successfully registered officer: {}", officer.getEmail());
 
+        // Send welcome email
+        emailService.sendWelcomeEmail(officer.getEmail(), officer.getFullName(), officer.getOfficerCode());
+
         return buildAuthResponse(officer, token);
+    }
+
+    /**
+     * Initiate password reset process
+     */
+    @Transactional
+    public MessageResponse forgotPassword(ForgotPasswordRequest request) {
+        log.info("Password reset requested for email: {}", request.getEmail());
+
+        Officer officer = officerRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + request.getEmail()));
+
+        if (!officer.isActive()) {
+            throw new BusinessException("Officer account is inactive");
+        }
+
+        // Generate reset token (UUID + timestamp for uniqueness)
+        String resetToken = UUID.randomUUID().toString().replace("-", "");
+
+        // Hash the token before storing (security best practice)
+        String hashedToken = passwordEncoder.encode(resetToken);
+
+        // Token expires in 1 hour
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
+
+        officer.setResetToken(hashedToken);
+        officer.setResetTokenExpiresAt(expiresAt);
+        officerRepository.save(officer);
+
+        log.info("Password reset token generated for: {}", request.getEmail());
+
+        // Send password reset email with the plain token (before hashing)
+        emailService.sendPasswordResetEmail(officer.getEmail(), officer.getFullName(), resetToken);
+
+        return MessageResponse.builder()
+            .message("Password reset instructions have been sent to your email. The reset link is valid for 1 hour.")
+            .success(true)
+            .build();
+    }
+
+    /**
+     * Reset password using reset token
+     */
+    @Transactional
+    public MessageResponse resetPassword(ResetPasswordRequest request) {
+        log.info("Attempting password reset with token");
+
+        // Validate passwords match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException("Passwords do not match");
+        }
+
+        // Find officer with non-expired reset token
+        Officer officer = officerRepository.findAll().stream()
+            .filter(o -> o.getResetToken() != null &&
+                        o.getResetTokenExpiresAt() != null &&
+                        o.getResetTokenExpiresAt().isAfter(LocalDateTime.now()) &&
+                        passwordEncoder.matches(request.getToken(), o.getResetToken()))
+            .findFirst()
+            .orElseThrow(() -> new BusinessException("Invalid or expired reset token"));
+
+        // Update password
+        officer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+
+        // Clear reset token
+        officer.setResetToken(null);
+        officer.setResetTokenExpiresAt(null);
+
+        officerRepository.save(officer);
+
+        log.info("Password successfully reset for officer: {}", officer.getEmail());
+
+        // Send confirmation email
+        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
+
+        return MessageResponse.builder()
+            .message("Password has been successfully reset. You can now login with your new password.")
+            .success(true)
+            .build();
+    }
+
+    /**
+     * Change password for authenticated user
+     */
+    @Transactional
+    public MessageResponse changePassword(UUID officerId, ChangePasswordRequest request) {
+        log.info("Password change requested for officer ID: {}", officerId);
+
+        Officer officer = officerRepository.findById(officerId)
+            .orElseThrow(() -> new ResourceNotFoundException("Officer not found"));
+
+        // Validate current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), officer.getPasswordHash())) {
+            throw new BusinessException("Current password is incorrect");
+        }
+
+        // Validate new passwords match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException("New passwords do not match");
+        }
+
+        // Validate new password is different from current
+        if (passwordEncoder.matches(request.getNewPassword(), officer.getPasswordHash())) {
+            throw new BusinessException("New password must be different from current password");
+        }
+
+        // Update password
+        officer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        officerRepository.save(officer);
+
+        log.info("Password successfully changed for officer: {}", officer.getEmail());
+
+        // Send confirmation email
+        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
+
+        return MessageResponse.builder()
+            .message("Password has been successfully changed.")
+            .success(true)
+            .build();
     }
 
     /**
