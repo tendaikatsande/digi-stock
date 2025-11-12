@@ -4,9 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -104,17 +102,8 @@ public class OwnerController {
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<OwnerResponse>> getOwnersByDistrict(
             @PathVariable String district,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/owners/district/{} (page: {}, size: {})", district, page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+            Pageable pageable) {
+        log.info("GET /api/v1/owners/district/{}", district);
         Page<OwnerResponse> response = ownerService.getOwnersByDistrict(district, pageable);
         return ResponseEntity.ok(response);
     }
@@ -127,17 +116,8 @@ public class OwnerController {
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<OwnerResponse>> searchOwners(
             @RequestParam("q") String searchTerm,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/owners/search?q={} (page: {}, size: {})", searchTerm, page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+            Pageable pageable) {
+        log.info("GET /api/v1/owners/search?q={}", searchTerm);
         Page<OwnerResponse> response = ownerService.searchOwnersByName(searchTerm, pageable);
         return ResponseEntity.ok(response);
     }
@@ -148,18 +128,8 @@ public class OwnerController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
-    public ResponseEntity<Page<OwnerResponse>> getAllOwners(
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/owners (page: {}, size: {})", page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+    public ResponseEntity<Page<OwnerResponse>> getAllOwners(Pageable pageable) {
+        log.info("GET /api/v1/owners");
         Page<OwnerResponse> response = ownerService.getAllOwners(pageable);
         return ResponseEntity.ok(response);
     }

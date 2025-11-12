@@ -11,9 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -168,17 +166,8 @@ public class PoliceClearanceController {
     @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<ClearanceResponse>> getValidClearancesForLivestock(
             @Parameter(description = "Livestock UUID") @PathVariable UUID livestockId,
-            @Parameter(description = "Page number (0-indexed)", example = "0") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @Parameter(description = "Page size (max 100)", example = "20") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @Parameter(description = "Sort field", example = "clearanceDate") @RequestParam(defaultValue = "clearanceDate") String sortBy,
-            @Parameter(description = "Sort direction (ASC/DESC)", example = "DESC") @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/clearances/livestock/{}/valid (page: {}, size: {})", livestockId, page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+            Pageable pageable) {
+        log.info("GET /api/v1/clearances/livestock/{}/valid", livestockId);
         Page<ClearanceResponse> response = clearanceService.getValidClearancesForLivestock(livestockId, pageable);
         return ResponseEntity.ok(response);
     }
@@ -199,17 +188,8 @@ public class PoliceClearanceController {
     @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<ClearanceResponse>> getClearancesByOwner(
             @Parameter(description = "Owner UUID") @PathVariable UUID ownerId,
-            @Parameter(description = "Page number (0-indexed)", example = "0") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @Parameter(description = "Page size (max 100)", example = "20") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @Parameter(description = "Sort field", example = "clearanceDate") @RequestParam(defaultValue = "clearanceDate") String sortBy,
-            @Parameter(description = "Sort direction (ASC/DESC)", example = "DESC") @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/clearances/owner/{} (page: {}, size: {})", ownerId, page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+            Pageable pageable) {
+        log.info("GET /api/v1/clearances/owner/{}", ownerId);
         Page<ClearanceResponse> response = clearanceService.getClearancesByOwner(ownerId, pageable);
         return ResponseEntity.ok(response);
     }
@@ -227,18 +207,8 @@ public class PoliceClearanceController {
     })
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
-    public ResponseEntity<Page<ClearanceResponse>> getPendingClearances(
-            @Parameter(description = "Page number (0-indexed)", example = "0") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @Parameter(description = "Page size (max 100)", example = "20") @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @Parameter(description = "Sort field", example = "clearanceDate") @RequestParam(defaultValue = "clearanceDate") String sortBy,
-            @Parameter(description = "Sort direction (ASC/DESC)", example = "DESC") @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/clearances/pending (page: {}, size: {})", page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+    public ResponseEntity<Page<ClearanceResponse>> getPendingClearances(Pageable pageable) {
+        log.info("GET /api/v1/clearances/pending");
         Page<ClearanceResponse> response = clearanceService.getPendingClearances(pageable);
         return ResponseEntity.ok(response);
     }

@@ -4,9 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -92,17 +90,8 @@ public class LivestockController {
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getLivestockByOwner(
             @PathVariable UUID ownerId,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/livestock/owner/{} (page: {}, size: {})", ownerId, page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+            Pageable pageable) {
+        log.info("GET /api/v1/livestock/owner/{}", ownerId);
         Page<LivestockResponse> response = livestockService.getLivestockByOwner(ownerId, pageable);
         return ResponseEntity.ok(response);
     }
@@ -115,17 +104,8 @@ public class LivestockController {
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByMother(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+            Pageable pageable) {
         log.info("GET /api/v1/livestock/{}/offspring/mother", id);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
         Page<LivestockResponse> response = livestockService.getOffspringByMotherId(id, pageable);
         return ResponseEntity.ok(response);
     }
@@ -138,17 +118,8 @@ public class LivestockController {
     @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByFather(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
+            Pageable pageable) {
         log.info("GET /api/v1/livestock/{}/offspring/father", id);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
         Page<LivestockResponse> response = livestockService.getOffspringByFatherId(id, pageable);
         return ResponseEntity.ok(response);
     }
@@ -183,18 +154,8 @@ public class LivestockController {
      */
     @GetMapping("/stolen")
     @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
-    public ResponseEntity<Page<LivestockResponse>> getStolenLivestock(
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_NUMBER) int page,
-            @RequestParam(defaultValue = Constants.DEFAULT_PAGE_SIZE_STR) int size,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_BY) String sortBy,
-            @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) String sortDir) {
-        log.info("GET /api/v1/livestock/stolen (page: {}, size: {})", page, size);
-
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+    public ResponseEntity<Page<LivestockResponse>> getStolenLivestock(Pageable pageable) {
+        log.info("GET /api/v1/livestock/stolen");
         Page<LivestockResponse> response = livestockService.getStolenLivestock(pageable);
         return ResponseEntity.ok(response);
     }
