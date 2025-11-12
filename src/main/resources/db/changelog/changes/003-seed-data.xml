@@ -7,6 +7,7 @@
 
     <!-- Create default admin officer -->
     <changeSet id="030-create-default-admin" author="digistock">
+        <validCheckSum>9:764b208e255c122e685b4ce4da3ee3a8</validCheckSum>
         <insert tableName="officers">
             <column name="id" valueComputed="uuid_generate_v4()"/>
             <column name="officer_code" value="ADMIN-001"/>
