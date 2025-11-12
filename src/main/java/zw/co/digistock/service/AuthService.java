@@ -38,6 +38,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final EmailService emailService;
 
     /**
      * Authenticate officer and return JWT token
@@ -124,6 +125,9 @@ public class AuthService {
 
         log.info("Successfully registered officer: {}", officer.getEmail());
 
+        // Send welcome email
+        emailService.sendWelcomeEmail(officer.getEmail(), officer.getFullName(), officer.getOfficerCode());
+
         return buildAuthResponse(officer, token);
     }
 
@@ -156,9 +160,8 @@ public class AuthService {
 
         log.info("Password reset token generated for: {}", request.getEmail());
 
-        // In production, send email with reset link containing the token
-        // For now, we'll return a message (in real app, don't expose token in response)
-        // TODO: Integrate email service to send reset link
+        // Send password reset email with the plain token (before hashing)
+        emailService.sendPasswordResetEmail(officer.getEmail(), officer.getFullName(), resetToken);
 
         return MessageResponse.builder()
             .message("Password reset instructions have been sent to your email. The reset link is valid for 1 hour.")
@@ -198,6 +201,9 @@ public class AuthService {
 
         log.info("Password successfully reset for officer: {}", officer.getEmail());
 
+        // Send confirmation email
+        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
+
         return MessageResponse.builder()
             .message("Password has been successfully reset. You can now login with your new password.")
             .success(true)
@@ -234,6 +240,9 @@ public class AuthService {
         officerRepository.save(officer);
 
         log.info("Password successfully changed for officer: {}", officer.getEmail());
+
+        // Send confirmation email
+        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
 
         return MessageResponse.builder()
             .message("Password has been successfully changed.")
