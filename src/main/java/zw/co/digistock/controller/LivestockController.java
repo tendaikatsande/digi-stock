@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zw.co.digistock.dto.request.RegisterLivestockRequest;
+import zw.co.digistock.dto.request.UpdateLivestockRequest;
 import zw.co.digistock.dto.response.LivestockResponse;
 import zw.co.digistock.service.LivestockService;
 import zw.co.digistock.util.Constants;
@@ -28,6 +29,18 @@ import java.util.UUID;
 public class LivestockController {
 
     private final LivestockService livestockService;
+
+    /**
+     * Get all livestock (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    public ResponseEntity<Page<LivestockResponse>> getAllLivestock(Pageable pageable) {
+        log.info("GET /api/v1/livestock");
+        Page<LivestockResponse> response = livestockService.getAllLivestock(pageable);
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * Register new livestock
@@ -145,6 +158,21 @@ public class LivestockController {
     public ResponseEntity<LivestockResponse> markAsRecovered(@PathVariable UUID id) {
         log.info("POST /api/v1/livestock/{}/mark-recovered", id);
         LivestockResponse response = livestockService.markAsRecovered(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Update livestock information (limited fields)
+     * Only AGRITEX officers and admins can update livestock
+     * Note: Tag code, owner, and parentage cannot be changed
+     */
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    public ResponseEntity<LivestockResponse> updateLivestock(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateLivestockRequest request) {
+        log.info("PATCH /api/v1/livestock/{} - Update livestock", id);
+        LivestockResponse response = livestockService.updateLivestock(id, request);
         return ResponseEntity.ok(response);
     }
 
