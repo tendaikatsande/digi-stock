@@ -15,10 +15,20 @@
             <column name="role" value="ADMIN"/>
             <column name="email" value="admin@digistock.zw"/>
             <!-- Password: Admin@123 (bcrypt hashed) - CHANGE IN PRODUCTION! -->
-            <column name="password_hash" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="password_hash" value="$2a$10$3JCsLTTIC7Cio3kGmM6rD.uRUHd9/Gx5lCgE/R1XJk7dznNTJ9MZq"/>
             <column name="active" valueBoolean="true"/>
             <column name="biometric_enrolled" valueBoolean="false"/>
         </insert>
+    </changeSet>
+
+    <!-- Update admin officer with missing fields -->
+    <changeSet id="031-update-admin-officer-fields" author="digistock">
+        <update tableName="officers">
+            <column name="phone_number" value="+263771234567"/>
+            <column name="province" value="Harare"/>
+            <column name="district" value="Harare"/>
+            <where>email = 'admin@digistock.zw'</where>
+        </update>
     </changeSet>
 
     <!-- NOTE: Add province/district reference data as needed -->
