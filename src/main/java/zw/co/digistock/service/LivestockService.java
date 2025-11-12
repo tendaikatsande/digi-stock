@@ -143,6 +143,15 @@ public class LivestockService {
     }
 
     /**
+     * Get all livestock (paginated)
+     */
+    @Transactional(readOnly = true)
+    public Page<LivestockResponse> getAllLivestock(Pageable pageable) {
+        Page<Livestock> page = livestockRepository.findAll(pageable);
+        return page.map(this::mapToResponse);
+    }
+
+    /**
      * Get all livestock for an owner (paginated)
      */
     @Transactional(readOnly = true)

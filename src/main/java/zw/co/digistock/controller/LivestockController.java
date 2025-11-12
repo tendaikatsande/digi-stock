@@ -30,6 +30,18 @@ public class LivestockController {
     private final LivestockService livestockService;
 
     /**
+     * Get all livestock (paginated)
+     * Accessible by AGRITEX officers, police officers, and admins
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    public ResponseEntity<Page<LivestockResponse>> getAllLivestock(Pageable pageable) {
+        log.info("GET /api/v1/livestock");
+        Page<LivestockResponse> response = livestockService.getAllLivestock(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Register new livestock
      * Only AGRITEX officers and admins can register livestock
      */
