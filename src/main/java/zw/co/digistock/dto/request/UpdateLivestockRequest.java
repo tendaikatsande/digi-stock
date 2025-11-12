@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import zw.co.digistock.domain.enums.Sex;
+import zw.co.digistock.domain.enums.Gender;
 
 import java.time.LocalDate;
 
@@ -31,7 +31,7 @@ public class UpdateLivestockRequest {
     private String breed;
 
     @Schema(description = "Sex of livestock", example = "FEMALE")
-    private Sex sex;
+    private Gender gender;
 
     @Schema(description = "Date of birth", example = "2020-05-15")
     private LocalDate birthDate;

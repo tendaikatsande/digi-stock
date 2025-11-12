@@ -246,8 +246,10 @@ public class LivestockService {
             livestock.setBreed(request.getBreed());
         }
 
-        if (request.getSex() != null) {
-            livestock.setSex(request.getSex());
+        // Update sex/gender if provided (UpdateLivestockRequest uses Gender enum)
+        if (request.getGender() != null) {
+            // store as database code (e.g., M, F, C)
+            livestock.setSex(request.getGender().toCode());
         }
 
         if (request.getBirthDate() != null) {

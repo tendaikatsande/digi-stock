@@ -13,13 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-            .allowedOrigins(
-                "http://localhost:3000",  // React dev server
-                "http://localhost:5173",  // Vite dev server
-                "http://localhost:8080",  // Same origin
-                "https://digistock.zw",    // Production domain
-                "https://admin.digistock.zw"  // Admin portal
-            )
+            .allowedOriginPatterns("*")  // Allow all origins
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             .allowedHeaders("*")
             .allowCredentials(true)
