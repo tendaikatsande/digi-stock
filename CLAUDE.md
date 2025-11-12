@@ -12,14 +12,14 @@ DigiStock is a digital livestock management platform for Zimbabwe that replaces 
 
 ### Infrastructure
 ```bash
-# Start PostgreSQL and MinIO services
+# Start PostgreSQL, MinIO, and Mailpit services
 docker-compose up -d
 
 # Stop services
 docker-compose down
 
 # View service logs
-docker-compose logs -f [postgres|minio]
+docker-compose logs -f [postgres|minio|mailpit]
 
 # Check service health
 docker-compose ps
@@ -60,6 +60,7 @@ cd backend
 - **OpenAPI Spec**: http://localhost:8080/v3/api-docs
 - **Health Check**: http://localhost:8080/actuator/health
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
+- **Mailpit Web UI**: http://localhost:8025 (email testing)
 
 ## Architecture
 
