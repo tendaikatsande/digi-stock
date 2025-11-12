@@ -36,6 +36,70 @@ public class OpenApiConfig {
                     - Streamline movement permits and police clearances
                     - Provide traceability from birth to slaughter
 
+                    ## Authentication Flow
+
+                    ### 1. Register a New Officer (Optional)
+                    **POST** `/api/v1/auth/register`
+
+                    Create a new officer account with email, password, and role (ADMIN, AGRITEX_OFFICER, POLICE_OFFICER, etc.)
+
+                    **Example Request:**
+                    ```json
+                    {
+                      "officerCode": "AG-001",
+                      "firstName": "John",
+                      "lastName": "Doe",
+                      "email": "john.doe@agritex.gov.zw",
+                      "phoneNumber": "+263771234567",
+                      "password": "SecurePass123!",
+                      "role": "AGRITEX_OFFICER",
+                      "province": "Harare",
+                      "district": "Harare"
+                    }
+                    ```
+
+                    ### 2. Login
+                    **POST** `/api/v1/auth/login`
+
+                    Authenticate with email and password to receive a JWT token.
+
+                    **Example Request:**
+                    ```json
+                    {
+                      "email": "admin@digistock.zw",
+                      "password": "Admin@123"
+                    }
+                    ```
+
+                    **Example Response:**
+                    ```json
+                    {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "tokenType": "Bearer",
+                      "expiresIn": 86400000,
+                      "officerId": "123e4567-e89b-12d3-a456-426614174000",
+                      "email": "admin@digistock.zw",
+                      "fullName": "System Administrator",
+                      "officerCode": "ADMIN-001",
+                      "role": "ADMIN",
+                      "active": true
+                    }
+                    ```
+
+                    ### 3. Use the Token
+                    Include the JWT token in the **Authorization** header for all protected endpoints:
+
+                    ```
+                    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    ```
+
+                    Click the **Authorize** button (🔓) at the top of this page to set your token for all requests.
+
+                    ### 4. Default Test Credentials
+                    For testing, use the pre-configured admin account:
+                    - **Email:** admin@digistock.zw
+                    - **Password:** Admin@123
+
                     ## Pagination
                     All list endpoints support pagination with the following query parameters:
                     - `page`: Page number (0-indexed, default: 0)
@@ -44,12 +108,6 @@ public class OpenApiConfig {
                     - `sortDir`: Sort direction ASC/DESC (default: DESC)
 
                     Example: `/api/v1/owners?page=0&size=20&sortBy=lastName&sortDir=ASC`
-
-                    ## Authentication
-                    The API uses JWT Bearer tokens for authentication.
-                    Include the token in the Authorization header: `Authorization: Bearer <token>`
-
-                    Note: Some endpoints temporarily use `X-Officer-Id` header during development.
                     """)
                 .version("1.0.0")
                 .contact(new Contact()
