@@ -75,8 +75,8 @@ class LivestockControllerIntegrationTest extends BaseIntegrationTest {
             .tagCode("ZW-MU-MOTHER01")
             .name("Mother Cow")
             .breed("Brahman")
-            .gender(Gender.FEMALE)
-            .dateOfBirth(LocalDate.now().minusYears(5))
+            .sex("F")
+            .birthDate(LocalDate.now().minusYears(5))
             .owner(testOwner1)
             .stolen(false)
             .build();
@@ -86,8 +86,8 @@ class LivestockControllerIntegrationTest extends BaseIntegrationTest {
             .tagCode("ZW-MU-FATHER01")
             .name("Father Bull")
             .breed("Brahman")
-            .gender(Gender.MALE)
-            .dateOfBirth(LocalDate.now().minusYears(6))
+            .sex("M")
+            .birthDate(LocalDate.now().minusYears(6))
             .owner(testOwner1)
             .stolen(false)
             .build();
@@ -103,8 +103,8 @@ class LivestockControllerIntegrationTest extends BaseIntegrationTest {
                 .tagCode(String.format("ZW-MU-%06d", i + 1))
                 .name(String.format("Livestock%d", i))
                 .breed(breeds[i % 5])
-                .gender(i % 2 == 0 ? Gender.FEMALE : Gender.MALE)
-                .dateOfBirth(LocalDate.now().minusYears(i % 5))
+                .sex(i % 2 == 0 ? "F" : "M")
+                .birthDate(LocalDate.now().minusYears(i % 5))
                 .owner(owner)
                 .stolen(i % 10 == 0) // Every 10th is stolen
                 .mother(i % 3 == 0 ? testMother : null)

@@ -39,12 +39,17 @@ public interface LivestockMapper {
     @Mapping(target = "mother", ignore = true)
     @Mapping(target = "father", ignore = true)
     @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "offspringAsMother", ignore = true)
+    @Mapping(target = "offspringAsFather", ignore = true)
+    @Mapping(target = "clearances", ignore = true)
+    @Mapping(target = "permits", ignore = true)
     @Mapping(target = "stolen", constant = "false")
     @Mapping(target = "stolenDate", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Livestock toEntity(RegisterLivestockRequest request);
 
     /**
@@ -57,11 +62,16 @@ public interface LivestockMapper {
     @Mapping(target = "mother", ignore = true)
     @Mapping(target = "father", ignore = true)
     @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "offspringAsMother", ignore = true)
+    @Mapping(target = "offspringAsFather", ignore = true)
+    @Mapping(target = "clearances", ignore = true)
+    @Mapping(target = "permits", ignore = true)
     @Mapping(target = "stolen", ignore = true)
     @Mapping(target = "stolenDate", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntityFromRequest(RegisterLivestockRequest request, @MappingTarget Livestock livestock);
 }

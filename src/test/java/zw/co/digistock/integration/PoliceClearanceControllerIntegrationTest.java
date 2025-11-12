@@ -80,8 +80,9 @@ class PoliceClearanceControllerIntegrationTest extends BaseIntegrationTest {
             .phoneNumber("+263772345678")
             .email("jane.smith@police.gov.zw")
             .role(UserRole.POLICE_OFFICER)
-            .station("Central Police")
+            .district("Harare")
             .province("Harare")
+            .active(true)
             .build();
         testOfficer = officerRepository.save(testOfficer);
 
@@ -90,8 +91,8 @@ class PoliceClearanceControllerIntegrationTest extends BaseIntegrationTest {
             .tagCode("ZW-HR-001234")
             .name("Bessie")
             .breed("Brahman")
-            .gender(Gender.FEMALE)
-            .dateOfBirth(LocalDate.now().minusYears(2))
+            .sex("F")
+            .birthDate(LocalDate.now().minusYears(2))
             .owner(testOwner)
             .stolen(false)
             .build();

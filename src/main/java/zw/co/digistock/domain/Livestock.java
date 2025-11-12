@@ -2,6 +2,7 @@ package zw.co.digistock.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import zw.co.digistock.domain.base.BaseEntity;
 
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Livestock extends BaseEntity {
 
     /**

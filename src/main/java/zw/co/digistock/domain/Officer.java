@@ -2,6 +2,7 @@ package zw.co.digistock.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import zw.co.digistock.domain.base.BaseEntity;
 import zw.co.digistock.domain.enums.UserRole;
 
@@ -22,7 +23,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Officer extends BaseEntity {
 
     @Column(name = "officer_code", unique = true, nullable = false, length = 50)

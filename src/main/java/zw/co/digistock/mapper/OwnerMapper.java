@@ -34,12 +34,14 @@ public interface OwnerMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "biometricEnrolled", constant = "false")
-    @Mapping(target = "fingerprints", ignore = true)
+    @Mapping(target = "fingerprintRefs", ignore = true)
     @Mapping(target = "photoRef", ignore = true)
+    @Mapping(target = "livestock", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Owner toEntity(RegisterOwnerRequest request);
 
     /**
@@ -48,11 +50,13 @@ public interface OwnerMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "biometricEnrolled", ignore = true)
-    @Mapping(target = "fingerprints", ignore = true)
+    @Mapping(target = "fingerprintRefs", ignore = true)
     @Mapping(target = "photoRef", ignore = true)
+    @Mapping(target = "livestock", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntityFromRequest(RegisterOwnerRequest request, @MappingTarget Owner owner);
 }

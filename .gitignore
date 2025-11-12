@@ -4,15 +4,46 @@
 *.iml
 *.ipr
 *.iws
+.settings/
+.classpath
+.project
+.factorypath
+.springBeans
+.sts4-cache/
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
 
 # Build outputs
 target/
 build/
 out/
 *.class
+bin/
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.properties
 
 # Logs
 *.log
+logs/
+*.log.*
+*.gz
 
 # Dependencies
 node_modules/
@@ -34,20 +65,86 @@ build/
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.test
+
+# Spring Boot
+HELP.md
+spring-boot-devtools.yml
+application-dev.yml
+application-dev.properties
+application-prod.yml
+application-prod.properties
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+*~
 
-# Secrets
+# Secrets & Sensitive Data
 application-local.yml
 application-local.properties
 *.pem
 *.key
 !src/main/resources/*.key
+credentials.json
+secrets.yml
+secrets.properties
+
+# Test Reports
+**/test-results/
+**/test-output/
+surefire-reports/
+failsafe-reports/
+*.exec
+*.ser
 
 # MinIO data
 data/minio/
 
 # PostgreSQL data
 data/postgres/
+*.db
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.backup
+*.cache
+.sass-cache/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/*.jar
+!**/src/test/**/target/*.jar
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+# Generated files
+generated/
+.apt_generated/
+.apt_generated_tests/
+bin/generated-sources/
+bin/generated-test-sources/

@@ -2,6 +2,7 @@ package zw.co.digistock.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import zw.co.digistock.domain.base.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -21,7 +22,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class PermitVerification extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

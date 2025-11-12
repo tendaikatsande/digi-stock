@@ -74,14 +74,15 @@ class MovementPermitControllerIntegrationTest extends BaseIntegrationTest {
 
         // Create test officer
         testOfficer = Officer.builder()
-            .officerCode("VO-002")
+            .officerCode("AO-002")
             .firstName("Bob")
             .lastName("Wilson")
             .phoneNumber("+263774567890")
-            .email("bob.wilson@vet.gov.zw")
-            .role(UserRole.VET_OFFICER)
-            .station("Bulawayo Veterinary")
+            .email("bob.wilson@agritex.gov.zw")
+            .role(UserRole.AGRITEX_OFFICER)
+            .district("Bulawayo")
             .province("Bulawayo")
+            .active(true)
             .build();
         testOfficer = officerRepository.save(testOfficer);
 
@@ -90,8 +91,8 @@ class MovementPermitControllerIntegrationTest extends BaseIntegrationTest {
             .tagCode("ZW-BU-005678")
             .name("Thunder")
             .breed("Angus")
-            .gender(Gender.MALE)
-            .dateOfBirth(LocalDate.now().minusYears(3))
+            .sex("M")
+            .birthDate(LocalDate.now().minusYears(3))
             .owner(testOwner)
             .stolen(false)
             .build();
@@ -102,7 +103,7 @@ class MovementPermitControllerIntegrationTest extends BaseIntegrationTest {
         for (int i = 0; i < 30; i++) {
             PermitStatus status;
             if (i % 3 == 0) {
-                status = PermitStatus.ACTIVE;
+                status = PermitStatus.APPROVED;
             } else if (i % 3 == 1) {
                 status = PermitStatus.COMPLETED;
             } else {
@@ -112,13 +113,13 @@ class MovementPermitControllerIntegrationTest extends BaseIntegrationTest {
             MovementPermit permit = MovementPermit.builder()
                 .permitNumber(String.format("MP-BU-%06d", i + 1))
                 .livestock(testLivestock)
-                .owner(testOwner)
                 .issuedBy(testOfficer)
                 .status(status)
-                .originDistrict("Bulawayo")
-                .destinationDistrict("Harare")
+                .fromLocation("Bulawayo")
+                .toLocation("Harare")
                 .purpose("Sale")
                 .issuedAt(LocalDateTime.now().minusDays(i))
+                .validFrom(LocalDate.now().minusDays(i))
                 .validUntil(LocalDate.now().plusDays(7 - i))
                 .build();
             testPermits.add(permitRepository.save(permit));

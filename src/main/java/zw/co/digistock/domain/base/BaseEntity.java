@@ -3,6 +3,9 @@ package zw.co.digistock.domain.base;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -22,6 +25,9 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseEntity {
 
     @Id

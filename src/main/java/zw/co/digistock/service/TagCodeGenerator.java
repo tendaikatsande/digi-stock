@@ -68,14 +68,14 @@ public class TagCodeGenerator {
     private int getNextSerial(String prefix) {
         // Find all tag codes with this prefix
         String pattern = prefix + "%";
-        var existingTags = livestockRepository.findByTagCodePattern(pattern);
+        var existingTags = livestockRepository.findByTagCodePattern(pattern, org.springframework.data.domain.Pageable.unpaged());
 
         if (existingTags.isEmpty()) {
             return 1; // First animal in this ward
         }
 
         // Extract serial numbers and find the maximum
-        int maxSerial = existingTags.stream()
+        int maxSerial = existingTags.getContent().stream()
             .map(livestock -> livestock.getTagCode().substring(prefix.length()))
             .mapToInt(Integer::parseInt)
             .max()
