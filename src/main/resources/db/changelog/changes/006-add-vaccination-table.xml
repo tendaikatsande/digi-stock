@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="006-add-vaccination-table" author="DigiStock Team">
+        <comment>Add vaccinations table for livestock health records</comment>
+
+        <createTable tableName="vaccinations">
+            <!-- Base entity fields -->
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Vaccination specific fields -->
+            <column name="vaccine_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vaccination_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_number" type="VARCHAR(100)"/>
+            <column name="next_vaccination_date" type="DATE"/>
+            <column name="notes" type="VARCHAR(1000)"/>
+
+            <column name="veterinary_officer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="livestock_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="location" type="VARCHAR(255)"/>
+            <column name="gps_coordinates" type="VARCHAR(255)"/>
+            <column name="administration_method" type="VARCHAR(100)"/>
+            <column name="manufacturer" type="VARCHAR(255)"/>
+            <column name="lot_number" type="VARCHAR(100)"/>
+            <column name="vaccine_expiry_date" type="DATE"/>
+            <column name="dose" type="VARCHAR(50)"/>
+            <column name="storage_temperature" type="VARCHAR(50)"/>
+            <column name="is_verified" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verified_by_id" type="UUID"/>
+            <column name="verified_date" type="DATE"/>
+        </createTable>
+
+        <!-- Foreign key constraints -->
+        <addForeignKeyConstraint
+                baseTableName="vaccinations"
+                baseColumnNames="veterinary_officer_id"
+                referencedTableName="officers"
+                referencedColumnNames="id"
+                constraintName="fk_vaccinations_veterinary_officer"
+                onDelete="RESTRICT"
+                onUpdate="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="vaccinations"
+                baseColumnNames="livestock_id"
+                referencedTableName="livestock"
+                referencedColumnNames="id"
+                constraintName="fk_vaccinations_livestock"
+                onDelete="CASCADE"
+                onUpdate="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="vaccinations"
+                baseColumnNames="verified_by_id"
+                referencedTableName="officers"
+                referencedColumnNames="id"
+                constraintName="fk_vaccinations_verified_by"
+                onDelete="RESTRICT"
+                onUpdate="CASCADE"/>
+
+        <!-- Indexes for performance -->
+        <createIndex indexName="idx_vaccinations_livestock"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="livestock_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_veterinary_officer"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="veterinary_officer_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_vaccine_type"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="vaccine_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_vaccination_date"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="vaccination_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_batch_number"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="batch_number"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_next_vaccination_date"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="next_vaccination_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_location"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="location"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vaccinations_is_verified"
+                     tableName="vaccinations"
+                     unique="false">
+            <column name="is_verified"/>
+        </createIndex>
+    </changeSet>
+
+
+</databaseChangeLog>

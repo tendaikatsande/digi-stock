@@ -38,11 +38,17 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - no authentication required
                 .requestMatchers(
-                    "/api/v1/auth/**",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/forgot-password",
+                    "/api/v1/auth/reset-password",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/actuator/health"
                 ).permitAll()
+                // Officer registration requires admin privileges
+                .requestMatchers("/api/v1/auth/register").hasAnyRole(
+                    "ADMIN", "NATIONAL_ADMIN", "PROVINCIAL_ADMIN", "DISTRICT_ADMIN"
+                )
                 // Protected endpoints - authentication required
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().authenticated()

@@ -39,6 +39,7 @@ public class LivestockResponse {
     private LocalDate stolenDate;
 
     private List<PhotoInfo> photos;
+    private List<VaccinationResponse> vaccinations;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

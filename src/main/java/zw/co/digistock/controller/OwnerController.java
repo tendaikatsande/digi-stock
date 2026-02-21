@@ -34,7 +34,7 @@ public class OwnerController {
      * Only AGRITEX officers and admins can register owners
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<OwnerResponse> registerOwner(
             @Valid @RequestBody RegisterOwnerRequest request) {
         log.info("POST /api/v1/owners - Register new owner");
@@ -47,7 +47,7 @@ public class OwnerController {
      * Only AGRITEX officers and admins can enroll fingerprints
      */
     @PostMapping("/{id}/fingerprint")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<OwnerResponse> enrollFingerprint(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile fingerprintImage) {
@@ -61,7 +61,7 @@ public class OwnerController {
      * Only AGRITEX officers and admins can upload photos
      */
     @PostMapping("/{id}/photo")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<OwnerResponse> uploadPhoto(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile photo) {
@@ -75,7 +75,7 @@ public class OwnerController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OwnerResponse> getOwnerById(@PathVariable UUID id) {
         log.info("GET /api/v1/owners/{}", id);
         OwnerResponse response = ownerService.getOwnerById(id);
@@ -87,7 +87,7 @@ public class OwnerController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/national-id/{nationalId}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OwnerResponse> getOwnerByNationalId(@PathVariable String nationalId) {
         log.info("GET /api/v1/owners/national-id/{}", nationalId);
         OwnerResponse response = ownerService.getOwnerByNationalId(nationalId);
@@ -99,7 +99,7 @@ public class OwnerController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/district/{district}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<OwnerResponse>> getOwnersByDistrict(
             @PathVariable String district,
             Pageable pageable) {
@@ -113,7 +113,7 @@ public class OwnerController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<OwnerResponse>> searchOwners(
             @RequestParam("q") String searchTerm,
             Pageable pageable) {
@@ -127,7 +127,7 @@ public class OwnerController {
      * Accessible by AGRITEX officers and admins
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<OwnerResponse>> getAllOwners(Pageable pageable) {
         log.info("GET /api/v1/owners");
         Page<OwnerResponse> response = ownerService.getAllOwners(pageable);
@@ -139,7 +139,7 @@ public class OwnerController {
      * Only AGRITEX officers and admins can update owners
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<OwnerResponse> updateOwner(
             @PathVariable UUID id,
             @Valid @RequestBody RegisterOwnerRequest request) {

@@ -129,6 +129,12 @@ public class Livestock extends BaseEntity {
     private List<MovementPermit> permits = new ArrayList<>();
 
     /**
+     * Vaccination records for this animal
+     */
+    @OneToMany(mappedBy = "livestock", cascade = CascadeType.ALL)
+    private List<Vaccination> vaccinations = new ArrayList<>();
+
+    /**
      * Whether this animal has been reported stolen
      */
     @Column(name = "is_stolen", nullable = false)

@@ -24,6 +24,7 @@ public interface LivestockMapper {
     @Mapping(target = "mother", source = "mother")
     @Mapping(target = "father", source = "father")
     @Mapping(target = "photos", source = "photos")
+    @Mapping(target = "vaccinations", source = "vaccinations")
     LivestockResponse toResponse(Livestock livestock);
 
     /**

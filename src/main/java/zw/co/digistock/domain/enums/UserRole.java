@@ -5,7 +5,22 @@ package zw.co.digistock.domain.enums;
  */
 public enum UserRole {
     /**
-     * System administrator with full access
+     * National administrator with full system access and governance
+     */
+    NATIONAL_ADMIN,
+
+    /**
+     * Provincial administrator with regional oversight and analytics
+     */
+    PROVINCIAL_ADMIN,
+
+    /**
+     * District administrator with local management and permit approvals
+     */
+    DISTRICT_ADMIN,
+
+    /**
+     * System administrator with full access (legacy support)
      */
     ADMIN,
 
@@ -20,12 +35,22 @@ public enum UserRole {
     POLICE_OFFICER,
 
     /**
+     * Veterinary officer - can access health records, vaccination logs, and disease reporting
+     */
+    VETERINARY_OFFICER,
+
+    /**
      * Livestock owner - can view their animals, request permits
      */
     OWNER,
 
     /**
-     * Veterinary inspector - can access health records, vaccination logs
+     * Veterinary inspector - can access health records, vaccination logs (legacy support)
      */
-    VETERINARY_INSPECTOR
+    VETERINARY_INSPECTOR,
+
+    /**
+     * Transporter - can verify movement permits and track routes
+     */
+    TRANSPORTER
 }

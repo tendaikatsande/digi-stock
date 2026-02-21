@@ -3,29 +3,28 @@ package zw.co.digistock.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import zw.co.digistock.domain.base.BaseEntity;
-import zw.co.digistock.domain.enums.UserRole;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents an officer in the DigiStock system
  * (AGRITEX extension officer, Police officer, or Admin).
+ *
+ * Auth fields (email, passwordHash, role, active, resetToken) are in AppUser.
  */
 @Entity
 @Table(name = "officers", indexes = {
     @Index(name = "idx_officer_code", columnList = "officer_code"),
-    @Index(name = "idx_officer_email", columnList = "email"),
     @Index(name = "idx_officer_district", columnList = "district")
 })
+@DiscriminatorValue("OFFICER")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Officer extends BaseEntity {
+public class Officer extends AppUser {
 
     @Column(name = "officer_code", unique = true, nullable = false, length = 50)
     private String officerCode;
@@ -36,27 +35,17 @@ public class Officer extends BaseEntity {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 30)
-    private UserRole role;
-
     @Column(name = "province", length = 100)
     private String province;
 
     @Column(name = "district", length = 100)
     private String district;
 
-    @Column(name = "email", unique = true, length = 100)
-    private String email;
+    @Column(name = "ward", length = 100)
+    private String ward;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    /**
-     * Password hash (bcrypt)
-     */
-    @Column(name = "password_hash", length = 255)
-    private String passwordHash;
 
     /**
      * References to officer's fingerprint templates in MinIO
@@ -77,24 +66,6 @@ public class Officer extends BaseEntity {
      */
     @Column(name = "biometric_enrolled", nullable = false)
     private boolean biometricEnrolled = false;
-
-    /**
-     * Whether this officer account is active
-     */
-    @Column(name = "active", nullable = false)
-    private boolean active = true;
-
-    /**
-     * Password reset token (hashed)
-     */
-    @Column(name = "reset_token", length = 255)
-    private String resetToken;
-
-    /**
-     * Reset token expiry timestamp
-     */
-    @Column(name = "reset_token_expires_at")
-    private LocalDateTime resetTokenExpiresAt;
 
     /**
      * Clearances issued by this officer (if POLICE_OFFICER)

@@ -10,29 +10,38 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import zw.co.digistock.domain.AppUser;
 import zw.co.digistock.domain.Officer;
+import zw.co.digistock.domain.Owner;
+import zw.co.digistock.domain.enums.UserRole;
 import zw.co.digistock.dto.request.*;
 import zw.co.digistock.dto.response.AuthResponse;
 import zw.co.digistock.dto.response.MessageResponse;
 import zw.co.digistock.exception.BusinessException;
 import zw.co.digistock.exception.DuplicateResourceException;
 import zw.co.digistock.exception.ResourceNotFoundException;
+import zw.co.digistock.repository.AppUserRepository;
 import zw.co.digistock.repository.OfficerRepository;
 import zw.co.digistock.security.JwtUtil;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Service for authentication operations
+ * Service for authentication operations (login, register, password management).
+ * Supports both Officer and Owner authentication via unified AppUser.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final AppUserRepository appUserRepository;
     private final OfficerRepository officerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -41,62 +50,45 @@ public class AuthService {
     private final EmailService emailService;
 
     /**
-     * Authenticate officer and return JWT token
+     * Authenticate a user (Officer or Owner) and return a JWT token.
      */
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
 
-        // Authenticate user
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-            )
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        // Load user details
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
 
-        // Get officer details
-        Officer officer = officerRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new BusinessException("Officer not found"));
+        AppUser user = appUserRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new BusinessException("User not found"));
 
-        if (!officer.isActive()) {
-            throw new BusinessException("Officer account is inactive");
+        if (!user.isActive()) {
+            throw new BusinessException("Account is inactive");
         }
 
-        // Generate JWT token with additional claims
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("officerId", officer.getId().toString());
-        claims.put("role", officer.getRole().name());
-        claims.put("officerCode", officer.getOfficerCode());
+        String token = jwtUtil.generateToken(buildClaims(user), userDetails);
+        log.info("Successfully authenticated user: {}", request.getEmail());
 
-        String token = jwtUtil.generateToken(claims, userDetails);
-
-        log.info("Successfully authenticated officer: {}", request.getEmail());
-
-        return buildAuthResponse(officer, token);
+        return buildAuthResponse(user, token);
     }
 
     /**
-     * Register a new officer
+     * Register a new Officer account. Requires admin role (enforced in SecurityConfig).
      */
     @Transactional
     public AuthResponse register(RegisterOfficerRequest request) {
         log.info("Registering new officer with email: {}", request.getEmail());
 
-        // Check if email already exists
-        if (officerRepository.existsByEmail(request.getEmail())) {
+        if (appUserRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Email already registered: " + request.getEmail());
         }
-
-        // Check if officer code already exists
         if (officerRepository.existsByOfficerCode(request.getOfficerCode())) {
             throw new DuplicateResourceException("Officer code already exists: " + request.getOfficerCode());
         }
 
-        // Create new officer
         Officer officer = Officer.builder()
             .officerCode(request.getOfficerCode())
             .firstName(request.getFirstName())
@@ -113,55 +105,41 @@ public class AuthService {
 
         officer = officerRepository.save(officer);
 
-        // Generate JWT token
         UserDetails userDetails = userDetailsService.loadUserByUsername(officer.getEmail());
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("officerId", officer.getId().toString());
-        claims.put("role", officer.getRole().name());
-        claims.put("officerCode", officer.getOfficerCode());
-
-        String token = jwtUtil.generateToken(claims, userDetails);
+        String token = jwtUtil.generateToken(buildClaims(officer), userDetails);
 
         log.info("Successfully registered officer: {}", officer.getEmail());
-
-        // Send welcome email
         emailService.sendWelcomeEmail(officer.getEmail(), officer.getFullName(), officer.getOfficerCode());
 
         return buildAuthResponse(officer, token);
     }
 
     /**
-     * Initiate password reset process
+     * Initiate password reset. Stores SHA-256 hashed token for secure DB lookup.
      */
     @Transactional
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
         log.info("Password reset requested for email: {}", request.getEmail());
 
-        Officer officer = officerRepository.findByEmail(request.getEmail())
+        AppUser user = appUserRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + request.getEmail()));
 
-        if (!officer.isActive()) {
-            throw new BusinessException("Officer account is inactive");
+        if (!user.isActive()) {
+            throw new BusinessException("Account is inactive");
         }
 
-        // Generate reset token (UUID + timestamp for uniqueness)
-        String resetToken = UUID.randomUUID().toString().replace("-", "");
-
-        // Hash the token before storing (security best practice)
-        String hashedToken = passwordEncoder.encode(resetToken);
-
-        // Token expires in 1 hour
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
-
-        officer.setResetToken(hashedToken);
-        officer.setResetTokenExpiresAt(expiresAt);
-        officerRepository.save(officer);
+        String plainToken = UUID.randomUUID().toString().replace("-", "");
+        user.setResetToken(hashToken(plainToken));
+        user.setResetTokenExpiresAt(LocalDateTime.now().plusHours(1));
+        appUserRepository.save(user);
 
         log.info("Password reset token generated for: {}", request.getEmail());
 
-        // Send password reset email with the plain token (before hashing)
-        emailService.sendPasswordResetEmail(officer.getEmail(), officer.getFullName(), resetToken);
+        if (user instanceof Officer officer) {
+            emailService.sendPasswordResetEmail(user.getEmail(), officer.getFullName(), plainToken);
+        } else if (user instanceof Owner owner) {
+            emailService.sendPasswordResetEmail(user.getEmail(), owner.getFullName(), plainToken);
+        }
 
         return MessageResponse.builder()
             .message("Password reset instructions have been sent to your email. The reset link is valid for 1 hour.")
@@ -170,39 +148,33 @@ public class AuthService {
     }
 
     /**
-     * Reset password using reset token
+     * Reset password using the plain token emailed to the user.
+     * Looks up by SHA-256(token) — no full-table scan.
      */
     @Transactional
     public MessageResponse resetPassword(ResetPasswordRequest request) {
         log.info("Attempting password reset with token");
 
-        // Validate passwords match
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new BusinessException("Passwords do not match");
         }
 
-        // Find officer with non-expired reset token
-        Officer officer = officerRepository.findAll().stream()
-            .filter(o -> o.getResetToken() != null &&
-                        o.getResetTokenExpiresAt() != null &&
-                        o.getResetTokenExpiresAt().isAfter(LocalDateTime.now()) &&
-                        passwordEncoder.matches(request.getToken(), o.getResetToken()))
-            .findFirst()
+        AppUser user = appUserRepository.findByResetToken(hashToken(request.getToken()))
+            .filter(u -> u.getResetTokenExpiresAt() != null &&
+                         u.getResetTokenExpiresAt().isAfter(LocalDateTime.now()))
             .orElseThrow(() -> new BusinessException("Invalid or expired reset token"));
 
-        // Update password
-        officer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiresAt(null);
+        appUserRepository.save(user);
 
-        // Clear reset token
-        officer.setResetToken(null);
-        officer.setResetTokenExpiresAt(null);
+        log.info("Password successfully reset for user: {}", user.getEmail());
 
-        officerRepository.save(officer);
-
-        log.info("Password successfully reset for officer: {}", officer.getEmail());
-
-        // Send confirmation email
-        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
+        String fullName = user instanceof Officer o ? o.getFullName()
+                        : user instanceof Owner ow ? ow.getFullName()
+                        : user.getEmail();
+        emailService.sendPasswordChangeConfirmation(user.getEmail(), fullName);
 
         return MessageResponse.builder()
             .message("Password has been successfully reset. You can now login with your new password.")
@@ -211,38 +183,34 @@ public class AuthService {
     }
 
     /**
-     * Change password for authenticated user
+     * Change password for an authenticated user.
      */
     @Transactional
-    public MessageResponse changePassword(UUID officerId, ChangePasswordRequest request) {
-        log.info("Password change requested for officer ID: {}", officerId);
+    public MessageResponse changePassword(UUID userId, ChangePasswordRequest request) {
+        log.info("Password change requested for user ID: {}", userId);
 
-        Officer officer = officerRepository.findById(officerId)
-            .orElseThrow(() -> new ResourceNotFoundException("Officer not found"));
+        AppUser user = appUserRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Validate current password
-        if (!passwordEncoder.matches(request.getCurrentPassword(), officer.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new BusinessException("Current password is incorrect");
         }
-
-        // Validate new passwords match
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new BusinessException("New passwords do not match");
         }
-
-        // Validate new password is different from current
-        if (passwordEncoder.matches(request.getNewPassword(), officer.getPasswordHash())) {
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
             throw new BusinessException("New password must be different from current password");
         }
 
-        // Update password
-        officer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        officerRepository.save(officer);
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        appUserRepository.save(user);
 
-        log.info("Password successfully changed for officer: {}", officer.getEmail());
+        log.info("Password successfully changed for user: {}", user.getEmail());
 
-        // Send confirmation email
-        emailService.sendPasswordChangeConfirmation(officer.getEmail(), officer.getFullName());
+        String fullName = user instanceof Officer o ? o.getFullName()
+                        : user instanceof Owner ow ? ow.getFullName()
+                        : user.getEmail();
+        emailService.sendPasswordChangeConfirmation(user.getEmail(), fullName);
 
         return MessageResponse.builder()
             .message("Password has been successfully changed.")
@@ -250,22 +218,63 @@ public class AuthService {
             .build();
     }
 
-    /**
-     * Build authentication response
-     */
-    private AuthResponse buildAuthResponse(Officer officer, String token) {
-        return AuthResponse.builder()
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private Map<String, Object> buildClaims(AppUser user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId().toString());
+        claims.put("userType", user instanceof Officer ? "OFFICER" : "OWNER");
+        claims.put("role", user.getRole().name());
+        if (user instanceof Officer officer) {
+            claims.put("officerCode", officer.getOfficerCode());
+        }
+        return claims;
+    }
+
+    private AuthResponse buildAuthResponse(AppUser user, String token) {
+        AuthResponse.AuthResponseBuilder builder = AuthResponse.builder()
             .token(token)
             .tokenType("Bearer")
             .expiresIn(jwtUtil.getExpirationTime())
-            .officerId(officer.getId())
-            .email(officer.getEmail())
-            .fullName(officer.getFullName())
-            .officerCode(officer.getOfficerCode())
-            .role(officer.getRole())
-            .province(officer.getProvince())
-            .district(officer.getDistrict())
-            .active(officer.isActive())
-            .build();
+            .userId(user.getId())
+            .email(user.getEmail())
+            .role(user.getRole())
+            .active(user.isActive())
+            .userType(user instanceof Officer ? "OFFICER" : "OWNER");
+
+        if (user instanceof Officer officer) {
+            builder.fullName(officer.getFullName())
+                   .officerCode(officer.getOfficerCode())
+                   .province(officer.getProvince())
+                   .district(officer.getDistrict());
+        } else if (user instanceof Owner owner) {
+            builder.fullName(owner.getFullName())
+                   .province(owner.getProvince())
+                   .district(owner.getDistrict());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Hash a token using SHA-256 for secure, queryable storage.
+     * SHA-256 is deterministic (unlike BCrypt), enabling DB lookup by hash.
+     */
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                String h = Integer.toHexString(0xff & b);
+                if (h.length() == 1) hex.append('0');
+                hex.append(h);
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 algorithm not available", e);
+        }
     }
 }

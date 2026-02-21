@@ -12,12 +12,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import zw.co.digistock.dto.request.*;
 import zw.co.digistock.dto.response.AuthResponse;
 import zw.co.digistock.dto.response.MessageResponse;
+import zw.co.digistock.repository.AppUserRepository;
 import zw.co.digistock.service.AuthService;
-import zw.co.digistock.security.JwtUtil;
 
 import java.util.UUID;
 
@@ -41,7 +43,7 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtUtil jwtUtil;
+    private final AppUserRepository appUserRepository;
 
     /**
      * Authenticate officer and get JWT token
@@ -423,16 +425,16 @@ public class AuthController {
         )
     })
     public ResponseEntity<MessageResponse> changePassword(
-            @RequestHeader("Authorization") String authHeader,
             @Valid @RequestBody ChangePasswordRequest request) {
         log.info("POST /api/v1/auth/change-password - Password change request");
 
-        // Extract officer ID from JWT token
-        String token = authHeader.replace("Bearer ", "");
-        String email = jwtUtil.extractUsername(token);
-        UUID officerId = UUID.fromString(jwtUtil.extractClaim(token, claims -> claims.get("officerId", String.class)));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID userId = appUserRepository.findByEmail(email)
+            .orElseThrow(() -> new zw.co.digistock.exception.ResourceNotFoundException("User not found"))
+            .getId();
 
-        MessageResponse response = authService.changePassword(officerId, request);
+        MessageResponse response = authService.changePassword(userId, request);
         return ResponseEntity.ok(response);
     }
 }

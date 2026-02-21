@@ -50,7 +50,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "403", description = "Not authorized - only police officers can issue clearances")
     })
     @PostMapping
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER','POLICE_OFFICER')")
     public ResponseEntity<ClearanceResponse> createClearance(
             @Valid @RequestBody CreateClearanceRequest request,
             @Parameter(description = "Officer ID (temporary - will be replaced with JWT authentication)")
@@ -74,7 +74,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "400", description = "Clearance is not in PENDING status")
     })
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER')")
     public ResponseEntity<ClearanceResponse> approveClearance(
             @Parameter(description = "Clearance ID") @PathVariable UUID id,
             @Parameter(description = "Officer ID (temporary - will be replaced with JWT authentication)")
@@ -98,7 +98,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "400", description = "Clearance is not in PENDING status")
     })
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER')")
     public ResponseEntity<ClearanceResponse> rejectClearance(
             @Parameter(description = "Clearance ID") @PathVariable UUID id,
             @Parameter(description = "Reason for rejection", required = true) @RequestParam("reason") String reason) {
@@ -120,7 +120,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "404", description = "Clearance not found")
     })
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ClearanceResponse> getClearanceById(
             @Parameter(description = "Clearance UUID") @PathVariable UUID id) {
         log.info("GET /api/v1/clearances/{}", id);
@@ -141,7 +141,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "404", description = "Clearance not found")
     })
     @GetMapping("/number/{clearanceNumber}")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ClearanceResponse> getClearanceByClearanceNumber(
             @Parameter(description = "Clearance number (e.g., PC-HR-000001)", example = "PC-HR-000001")
             @PathVariable String clearanceNumber) {
@@ -163,7 +163,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "404", description = "Livestock not found")
     })
     @GetMapping("/livestock/{livestockId}/valid")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ClearanceResponse>> getValidClearancesForLivestock(
             @Parameter(description = "Livestock UUID") @PathVariable UUID livestockId,
             Pageable pageable) {
@@ -185,7 +185,7 @@ public class PoliceClearanceController {
         @ApiResponse(responseCode = "404", description = "Owner not found")
     })
     @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ClearanceResponse>> getClearancesByOwner(
             @Parameter(description = "Owner UUID") @PathVariable UUID ownerId,
             Pageable pageable) {
@@ -206,7 +206,7 @@ public class PoliceClearanceController {
         )
     })
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER')")
     public ResponseEntity<Page<ClearanceResponse>> getPendingClearances(Pageable pageable) {
         log.info("GET /api/v1/clearances/pending");
         Page<ClearanceResponse> response = clearanceService.getPendingClearances(pageable);

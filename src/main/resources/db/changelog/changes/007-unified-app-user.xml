@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        Unified AppUser Migration
+        =========================
+        Introduces a shared app_users table (JPA JOINED inheritance) so both
+        Officers and Owners can authenticate through a single auth layer.
+
+        - app_users: stores auth + audit fields for all system users
+        - officers:  retains officer-specific profile fields; id FK → app_users.id
+        - owners:    retains owner-specific profile fields; id FK → app_users.id
+
+        Owners without an email get a placeholder inactive account so the FK
+        constraint is satisfied. They can be activated once a real email is set.
+    -->
+
+    <!-- Step 1: Create the app_users table -->
+    <changeSet id="007-create-app-users-table" author="digistock">
+        <createTable tableName="app_users">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_type" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(150)">
+                <constraints unique="true" nullable="false" uniqueConstraintName="uq_app_users_email"/>
+            </column>
+            <column name="password_hash" type="varchar(255)"/>
+            <column name="role" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <!-- SHA-256 hex = 64 chars; trim the old 255-char BCrypt field -->
+            <column name="reset_token" type="varchar(64)"/>
+            <column name="reset_token_expires_at" type="timestamp"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Step 2: Migrate all officer rows into app_users (preserving UUIDs) -->
+    <changeSet id="007-migrate-officers-to-app-users" author="digistock">
+        <sql>
+            INSERT INTO app_users (
+                id, user_type, email, password_hash, role, active,
+                reset_token, reset_token_expires_at,
+                created_at, updated_at, created_by, updated_by, version
+            )
+            SELECT
+                id,
+                'OFFICER',
+                email,
+                password_hash,
+                role,
+                active,
+                reset_token,
+                reset_token_expires_at,
+                COALESCE(created_at, current_timestamp),
+                updated_at,
+                created_by,
+                updated_by,
+                COALESCE(version, 0)
+            FROM officers;
+        </sql>
+        <rollback>
+            DELETE FROM app_users WHERE user_type = 'OFFICER';
+        </rollback>
+    </changeSet>
+
+    <!-- Step 3: Migrate owners with real email into app_users -->
+    <changeSet id="007-migrate-owners-with-email-to-app-users" author="digistock">
+        <sql>
+            INSERT INTO app_users (
+                id, user_type, email, password_hash, role, active,
+                created_at, updated_at, created_by, updated_by, version
+            )
+            SELECT
+                id,
+                'OWNER',
+                email,
+                NULL,
+                'OWNER',
+                true,
+                COALESCE(created_at, current_timestamp),
+                updated_at,
+                created_by,
+                updated_by,
+                COALESCE(version, 0)
+            FROM owners
+            WHERE email IS NOT NULL;
+        </sql>
+        <rollback>
+            DELETE FROM app_users WHERE user_type = 'OWNER' AND email NOT LIKE 'noaccount-%';
+        </rollback>
+    </changeSet>
+
+    <!-- Step 4: Create placeholder inactive accounts for owners without email -->
+    <changeSet id="007-migrate-owners-without-email-to-app-users" author="digistock">
+        <sql>
+            INSERT INTO app_users (
+                id, user_type, email, password_hash, role, active,
+                created_at, updated_at, created_by, updated_by, version
+            )
+            SELECT
+                id,
+                'OWNER',
+                CONCAT('noaccount-', national_id, '@placeholder.internal'),
+                NULL,
+                'OWNER',
+                false,
+                COALESCE(created_at, current_timestamp),
+                updated_at,
+                created_by,
+                updated_by,
+                COALESCE(version, 0)
+            FROM owners
+            WHERE email IS NULL;
+        </sql>
+        <rollback>
+            DELETE FROM app_users WHERE user_type = 'OWNER' AND email LIKE 'noaccount-%';
+        </rollback>
+    </changeSet>
+
+    <!-- Step 5: Add FK from officers.id to app_users.id -->
+    <changeSet id="007-add-officers-app-user-fk" author="digistock">
+        <addForeignKeyConstraint
+            constraintName="fk_officers_app_users"
+            baseTableName="officers" baseColumnNames="id"
+            referencedTableName="app_users" referencedColumnNames="id"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="officers" constraintName="fk_officers_app_users"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 6: Add FK from owners.id to app_users.id -->
+    <changeSet id="007-add-owners-app-user-fk" author="digistock">
+        <addForeignKeyConstraint
+            constraintName="fk_owners_app_users"
+            baseTableName="owners" baseColumnNames="id"
+            referencedTableName="app_users" referencedColumnNames="id"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="owners" constraintName="fk_owners_app_users"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 7: Drop auth/audit columns from officers (now in app_users) -->
+    <changeSet id="007-drop-auth-columns-from-officers" author="digistock">
+        <dropColumn tableName="officers" columnName="email"/>
+        <dropColumn tableName="officers" columnName="password_hash"/>
+        <dropColumn tableName="officers" columnName="role"/>
+        <dropColumn tableName="officers" columnName="active"/>
+        <dropColumn tableName="officers" columnName="reset_token"/>
+        <dropColumn tableName="officers" columnName="reset_token_expires_at"/>
+        <dropColumn tableName="officers" columnName="created_at"/>
+        <dropColumn tableName="officers" columnName="updated_at"/>
+        <dropColumn tableName="officers" columnName="created_by"/>
+        <dropColumn tableName="officers" columnName="updated_by"/>
+        <dropColumn tableName="officers" columnName="version"/>
+        <rollback>
+            <!-- Data cannot be recovered after drop; re-add columns only -->
+            <addColumn tableName="officers">
+                <column name="email" type="varchar(100)"/>
+                <column name="password_hash" type="varchar(255)"/>
+                <column name="role" type="varchar(30)"/>
+                <column name="active" type="boolean" defaultValueBoolean="true"/>
+                <column name="reset_token" type="varchar(255)"/>
+                <column name="reset_token_expires_at" type="timestamp"/>
+                <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp"/>
+                <column name="updated_at" type="timestamp with time zone"/>
+                <column name="created_by" type="varchar(100)"/>
+                <column name="updated_by" type="varchar(100)"/>
+                <column name="version" type="bigint" defaultValueNumeric="0"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 8: Add ward column to officers (was missing from initial schema) -->
+    <changeSet id="007-add-ward-to-officers" author="digistock">
+        <addColumn tableName="officers">
+            <column name="ward" type="varchar(100)"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="officers" columnName="ward"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 9: Drop audit and email columns from owners (now in app_users) -->
+    <changeSet id="007-drop-auth-columns-from-owners" author="digistock">
+        <dropColumn tableName="owners" columnName="email"/>
+        <dropColumn tableName="owners" columnName="created_at"/>
+        <dropColumn tableName="owners" columnName="updated_at"/>
+        <dropColumn tableName="owners" columnName="created_by"/>
+        <dropColumn tableName="owners" columnName="updated_by"/>
+        <dropColumn tableName="owners" columnName="version"/>
+        <rollback>
+            <addColumn tableName="owners">
+                <column name="email" type="varchar(100)"/>
+                <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp"/>
+                <column name="updated_at" type="timestamp with time zone"/>
+                <column name="created_by" type="varchar(100)"/>
+                <column name="updated_by" type="varchar(100)"/>
+                <column name="version" type="bigint" defaultValueNumeric="0"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

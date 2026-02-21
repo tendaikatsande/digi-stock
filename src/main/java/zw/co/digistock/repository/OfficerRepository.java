@@ -59,4 +59,9 @@ public interface OfficerRepository extends JpaRepository<Officer, UUID> {
      * Check if email exists
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Find officer by hashed reset token (SHA-256 hash)
+     */
+    Optional<Officer> findByResetToken(String hashedToken);
 }

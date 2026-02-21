@@ -91,4 +91,16 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
      * Count stolen livestock
      */
     long countByStolen(boolean stolen);
+
+    /**
+     * Count livestock grouped by owner province
+     */
+    @Query("SELECT o.province, COUNT(l) FROM Livestock l JOIN l.owner o GROUP BY o.province")
+    List<Object[]> countGroupByProvince();
+
+    /**
+     * Count livestock grouped by breed
+     */
+    @Query("SELECT l.breed, COUNT(l) FROM Livestock l GROUP BY l.breed")
+    List<Object[]> countGroupByBreed();
 }

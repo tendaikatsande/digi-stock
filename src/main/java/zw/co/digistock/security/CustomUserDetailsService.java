@@ -9,43 +9,44 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import zw.co.digistock.domain.Officer;
-import zw.co.digistock.repository.OfficerRepository;
+import zw.co.digistock.domain.AppUser;
+import zw.co.digistock.repository.AppUserRepository;
 
 import java.util.Collections;
 
 /**
- * Custom UserDetailsService implementation for loading officer details
+ * UserDetailsService implementation that loads any AppUser (Officer or Owner)
+ * by email address for JWT authentication.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final OfficerRepository officerRepository;
+    private final AppUserRepository appUserRepository;
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.debug("Loading user by email: {}", email);
 
-        Officer officer = officerRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Officer not found with email: " + email));
+        AppUser user = appUserRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        if (!officer.isActive()) {
-            throw new UsernameNotFoundException("Officer account is inactive: " + email);
+        if (!user.isActive()) {
+            throw new UsernameNotFoundException("User account is inactive: " + email);
         }
 
         return User.builder()
-            .username(officer.getEmail())
-            .password(officer.getPasswordHash())
+            .username(user.getEmail())
+            .password(user.getPasswordHash())
             .authorities(Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + officer.getRole().name())
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
             ))
             .accountExpired(false)
             .accountLocked(false)
             .credentialsExpired(false)
-            .disabled(!officer.isActive())
+            .disabled(!user.isActive())
             .build();
     }
 }

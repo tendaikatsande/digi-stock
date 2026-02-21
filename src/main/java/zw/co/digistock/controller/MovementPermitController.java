@@ -34,7 +34,7 @@ public class MovementPermitController {
      * Only AGRITEX officers and admins can create movement permits
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<PermitResponse> createPermit(
             @Valid @RequestBody CreatePermitRequest request,
             @RequestHeader(value = "X-Officer-Id") UUID officerId) {
@@ -48,7 +48,7 @@ public class MovementPermitController {
      * Only police officers and admins can verify permits at checkpoints
      */
     @PostMapping("/{id}/verify")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER')")
     public ResponseEntity<PermitResponse> verifyPermit(
             @PathVariable UUID id,
             @RequestHeader(value = "X-Officer-Id") UUID officerId,
@@ -65,7 +65,7 @@ public class MovementPermitController {
      * Only AGRITEX officers and admins can complete permits
      */
     @PostMapping("/{id}/complete")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER','POLICE_OFFICER')")
     public ResponseEntity<PermitResponse> completePermit(
             @PathVariable UUID id,
             @RequestParam(required = false) Double latitude,
@@ -80,7 +80,7 @@ public class MovementPermitController {
      * Only AGRITEX officers and admins can cancel permits
      */
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<PermitResponse> cancelPermit(
             @PathVariable UUID id,
             @RequestParam("reason") String reason) {
@@ -94,7 +94,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PermitResponse> getPermitById(@PathVariable UUID id) {
         log.info("GET /api/v1/permits/{}", id);
         PermitResponse response = permitService.getPermitById(id);
@@ -106,7 +106,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/number/{permitNumber}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PermitResponse> getPermitByNumber(@PathVariable String permitNumber) {
         log.info("GET /api/v1/permits/number/{}", permitNumber);
         PermitResponse response = permitService.getPermitByNumber(permitNumber);
@@ -118,7 +118,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/livestock/{livestockId}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PermitResponse>> getPermitsByLivestock(
             @PathVariable UUID livestockId,
             Pageable pageable) {
@@ -132,7 +132,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PermitResponse>> getPermitsByStatus(
             @PathVariable PermitStatus status,
             Pageable pageable) {
@@ -146,7 +146,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/valid")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PermitResponse>> getValidPermits(Pageable pageable) {
         log.info("GET /api/v1/permits/valid");
         Page<PermitResponse> response = permitService.getValidPermits(pageable);
@@ -158,7 +158,7 @@ public class MovementPermitController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PermitResponse>> getAllPermits(Pageable pageable) {
         log.info("GET /api/v1/permits");
         Page<PermitResponse> response = permitService.getAllPermits(pageable);

@@ -3,6 +3,7 @@ package zw.co.digistock.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import zw.co.digistock.domain.District;
 import zw.co.digistock.domain.Ward;
 
 import java.util.List;
@@ -24,6 +25,11 @@ public interface WardRepository extends JpaRepository<Ward, UUID> {
      * Find ward by code
      */
     Optional<Ward> findByCode(String code);
+
+    /**
+     * Find ward by district and code
+     */
+    Optional<Ward> findByDistrictAndCode(District district, String code);
 
     /**
      * Find all wards in a district

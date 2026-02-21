@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="008-create-ownership-transfers-table" author="digistock">
+        <createTable tableName="ownership_transfers">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="livestock_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_owner_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_owner_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="initiated_by_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transfer_date" type="date"/>
+            <column name="reason" type="varchar(500)"/>
+            <column name="from_owner_confirmed" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_owner_confirmed" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_owner_fingerprint_ref" type="varchar(500)"/>
+            <column name="to_owner_fingerprint_ref" type="varchar(500)"/>
+            <column name="cancellation_reason" type="varchar(500)"/>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="current_timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone"/>
+            <column name="created_by" type="varchar(100)"/>
+            <column name="updated_by" type="varchar(100)"/>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            constraintName="fk_transfer_livestock"
+            baseTableName="ownership_transfers" baseColumnNames="livestock_id"
+            referencedTableName="livestock" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            constraintName="fk_transfer_from_owner"
+            baseTableName="ownership_transfers" baseColumnNames="from_owner_id"
+            referencedTableName="app_users" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            constraintName="fk_transfer_to_owner"
+            baseTableName="ownership_transfers" baseColumnNames="to_owner_id"
+            referencedTableName="app_users" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            constraintName="fk_transfer_initiated_by"
+            baseTableName="ownership_transfers" baseColumnNames="initiated_by_id"
+            referencedTableName="app_users" referencedColumnNames="id"/>
+
+        <createIndex indexName="idx_transfer_livestock" tableName="ownership_transfers">
+            <column name="livestock_id"/>
+        </createIndex>
+        <createIndex indexName="idx_transfer_from_owner" tableName="ownership_transfers">
+            <column name="from_owner_id"/>
+        </createIndex>
+        <createIndex indexName="idx_transfer_to_owner" tableName="ownership_transfers">
+            <column name="to_owner_id"/>
+        </createIndex>
+        <createIndex indexName="idx_transfer_status" tableName="ownership_transfers">
+            <column name="status"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="ownership_transfers"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

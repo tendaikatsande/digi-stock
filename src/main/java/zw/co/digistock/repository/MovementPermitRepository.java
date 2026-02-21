@@ -83,4 +83,10 @@ public interface MovementPermitRepository extends JpaRepository<MovementPermit, 
      * Count permits by status
      */
     long countByStatus(PermitStatus status);
+
+    /**
+     * Count permits issued within a time range
+     */
+    @Query("SELECT COUNT(p) FROM MovementPermit p WHERE p.issuedAt >= :start AND p.issuedAt < :end")
+    long countIssuedBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
 }

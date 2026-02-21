@@ -40,7 +40,7 @@ public class OfficerController {
      * Only admins can view all officers
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Get all officers", description = "Retrieve paginated list of all officers in the system")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Successfully retrieved officers"),
@@ -91,7 +91,7 @@ public class OfficerController {
      * Get officer by email
      */
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Get officer by email", description = "Retrieve officer details by their email address")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officer found"),
@@ -108,7 +108,7 @@ public class OfficerController {
      * Get officers by role
      */
     @GetMapping("/role/{role}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Get officers by role", description = "Retrieve all officers with a specific role")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officers retrieved successfully")
@@ -156,7 +156,7 @@ public class OfficerController {
      * Get active officers
      */
     @GetMapping("/active")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Get active officers", description = "Retrieve all officers with active accounts")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officers retrieved successfully")
@@ -172,7 +172,7 @@ public class OfficerController {
      * Officers can update their own profile, admins can update any profile
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN') or #id == authentication.principal.id")
     @Operation(summary = "Update officer information", description = "Update officer profile details. Role and officer code cannot be changed.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officer updated successfully"),
@@ -191,7 +191,7 @@ public class OfficerController {
      * Upload officer photo
      */
     @PostMapping("/{id}/photo")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN') or #id == authentication.principal.id")
     @Operation(summary = "Upload officer photo", description = "Upload profile photo for an officer")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Photo uploaded successfully"),
@@ -209,7 +209,7 @@ public class OfficerController {
      * Enroll officer fingerprint
      */
     @PostMapping("/{id}/fingerprint")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN') or #id == authentication.principal.id")
     @Operation(summary = "Enroll officer fingerprint", description = "Enroll biometric fingerprint for an officer")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Fingerprint enrolled successfully"),
@@ -227,7 +227,7 @@ public class OfficerController {
      * Deactivate officer account
      */
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Deactivate officer", description = "Deactivate an officer account (soft delete)")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officer deactivated successfully"),
@@ -244,7 +244,7 @@ public class OfficerController {
      * Reactivate officer account
      */
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NATIONAL_ADMIN', 'PROVINCIAL_ADMIN', 'DISTRICT_ADMIN')")
     @Operation(summary = "Reactivate officer", description = "Reactivate a deactivated officer account")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Officer reactivated successfully"),

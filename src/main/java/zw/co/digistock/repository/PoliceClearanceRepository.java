@@ -73,4 +73,9 @@ public interface PoliceClearanceRepository extends JpaRepository<PoliceClearance
      * Check if clearance number exists
      */
     boolean existsByClearanceNumber(String clearanceNumber);
+
+    /**
+     * Count clearances by status
+     */
+    long countByStatus(ClearanceStatus status);
 }

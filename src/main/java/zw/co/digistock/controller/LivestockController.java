@@ -35,7 +35,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<LivestockResponse>> getAllLivestock(Pageable pageable) {
         log.info("GET /api/v1/livestock");
         Page<LivestockResponse> response = livestockService.getAllLivestock(pageable);
@@ -47,7 +47,7 @@ public class LivestockController {
      * Only AGRITEX officers and admins can register livestock
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<LivestockResponse> registerLivestock(
             @Valid @RequestBody RegisterLivestockRequest request) {
         log.info("POST /api/v1/livestock - Register new livestock: {}", request.getTagCode());
@@ -60,7 +60,7 @@ public class LivestockController {
      * Only AGRITEX officers and admins can upload photos
      */
     @PostMapping("/{id}/photos")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<LivestockResponse> uploadPhoto(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
@@ -76,7 +76,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LivestockResponse> getLivestockById(@PathVariable UUID id) {
         log.info("GET /api/v1/livestock/{}", id);
         LivestockResponse response = livestockService.getLivestockById(id);
@@ -88,7 +88,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/tag/{tagCode}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LivestockResponse> getLivestockByTagCode(@PathVariable String tagCode) {
         log.info("GET /api/v1/livestock/tag/{}", tagCode);
         LivestockResponse response = livestockService.getLivestockByTagCode(tagCode);
@@ -100,7 +100,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers, police officers, and admins
      */
     @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<LivestockResponse>> getLivestockByOwner(
             @PathVariable UUID ownerId,
             Pageable pageable) {
@@ -114,7 +114,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers and admins
      */
     @GetMapping("/{id}/offspring/mother")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByMother(
             @PathVariable UUID id,
             Pageable pageable) {
@@ -128,7 +128,7 @@ public class LivestockController {
      * Accessible by AGRITEX officers and admins
      */
     @GetMapping("/{id}/offspring/father")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<LivestockResponse>> getOffspringByFather(
             @PathVariable UUID id,
             Pageable pageable) {
@@ -142,7 +142,7 @@ public class LivestockController {
      * Only police officers and admins can mark livestock as stolen
      */
     @PostMapping("/{id}/mark-stolen")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER','AGRITEX_OFFICER')")
     public ResponseEntity<LivestockResponse> markAsStolen(@PathVariable UUID id) {
         log.info("POST /api/v1/livestock/{}/mark-stolen", id);
         LivestockResponse response = livestockService.markAsStolen(id);
@@ -154,7 +154,7 @@ public class LivestockController {
      * Only police officers and admins can mark livestock as recovered
      */
     @PostMapping("/{id}/mark-recovered")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER','AGRITEX_OFFICER')")
     public ResponseEntity<LivestockResponse> markAsRecovered(@PathVariable UUID id) {
         log.info("POST /api/v1/livestock/{}/mark-recovered", id);
         LivestockResponse response = livestockService.markAsRecovered(id);
@@ -167,7 +167,7 @@ public class LivestockController {
      * Note: Tag code, owner, and parentage cannot be changed
      */
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('AGRITEX_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','AGRITEX_OFFICER')")
     public ResponseEntity<LivestockResponse> updateLivestock(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateLivestockRequest request) {
@@ -181,7 +181,7 @@ public class LivestockController {
      * Accessible by police officers and admins
      */
     @GetMapping("/stolen")
-    @PreAuthorize("hasAnyRole('POLICE_OFFICER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','NATIONAL_ADMIN','PROVINCIAL_ADMIN','DISTRICT_ADMIN','POLICE_OFFICER')")
     public ResponseEntity<Page<LivestockResponse>> getStolenLivestock(Pageable pageable) {
         log.info("GET /api/v1/livestock/stolen");
         Page<LivestockResponse> response = livestockService.getStolenLivestock(pageable);

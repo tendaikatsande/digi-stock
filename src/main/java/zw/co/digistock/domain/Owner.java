@@ -3,7 +3,6 @@ package zw.co.digistock.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import zw.co.digistock.domain.base.BaseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +11,10 @@ import java.util.List;
  * Represents a livestock owner in the DigiStock system.
  * Owners can register their cattle, request movement permits,
  * and are identified via biometric fingerprint enrollment.
+ *
+ * Auth fields (email, passwordHash, role, active, resetToken) are in AppUser.
+ * Owners whose email is unknown during data migration are assigned a placeholder
+ * email and have active=false until they set up their portal account.
  */
 @Entity
 @Table(name = "owners", indexes = {
@@ -19,12 +22,13 @@ import java.util.List;
     @Index(name = "idx_owner_phone", columnList = "phone_number"),
     @Index(name = "idx_owner_district", columnList = "district")
 })
+@DiscriminatorValue("OWNER")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Owner extends BaseEntity {
+public class Owner extends AppUser {
 
     @Column(name = "national_id", unique = true, nullable = false, length = 50)
     private String nationalId;
@@ -37,9 +41,6 @@ public class Owner extends BaseEntity {
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    @Column(name = "email", length = 100)
-    private String email;
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
@@ -55,8 +56,6 @@ public class Owner extends BaseEntity {
 
     /**
      * References to fingerprint templates stored in MinIO.
-     * Format: ["minio://digistock-fingerprints/owners/{ownerId}/left-thumb.fpt",
-     *          "minio://digistock-fingerprints/owners/{ownerId}/right-thumb.fpt"]
      */
     @ElementCollection
     @CollectionTable(name = "owner_fingerprint_refs", joinColumns = @JoinColumn(name = "owner_id"))
@@ -81,9 +80,6 @@ public class Owner extends BaseEntity {
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Livestock> livestock = new ArrayList<>();
 
-    /**
-     * Convenience methods
-     */
     public String getFullName() {
         return firstName + " " + lastName;
     }

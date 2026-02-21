@@ -20,38 +20,17 @@ docker-compose down
 
 # View service logs
 docker-compose logs -f [postgres|minio|mailpit]
-
-# Check service health
-docker-compose ps
 ```
 
 ### Backend Development
 ```bash
-cd backend
-
-# Build the project
+# Run from root directory (mvnw is at root, not in backend/)
 ./mvnw clean install
-
-# Run application (port 8080)
 ./mvnw spring-boot:run
-
-# Run tests
 ./mvnw test
-
-# Run tests with coverage
-./mvnw test jacoco:report
-
-# Run specific test class
 ./mvnw test -Dtest=LivestockServiceTest
-
-# Skip tests during build
 ./mvnw clean install -DskipTests
-
-# Package for deployment
 ./mvnw clean package -DskipTests
-
-# Format code (if configured)
-./mvnw spotless:apply
 ```
 
 ### API Access
@@ -77,14 +56,17 @@ Controller → Service → Repository → Database
 **Repositories** (`repository/`): JPA data access with `@Repository`, custom queries using `@Query`
 **Domain** (`domain/`): JPA entities with relationships, constraints, and audit fields
 **DTOs** (`dto/`): Request validation with JSR-380, response mapping to prevent over-fetching
-**Config** (`config/`): Spring configuration classes for MinIO, SourceAFIS, Security, CORS, Swagger
+**Config** (`config/`): Spring configuration classes for MinIO, SourceAFIS, Security, CORS, Swagger, Cache
+**Security** (`security/`): JWT filter (`JwtAuthenticationFilter`) and token utilities (`JwtUtil`)
+**Util** (`util/`): `ApiResponse<T>` wrapper, `PagedResponse`, `Constants`, `DateTimeUtils`
 
 ### Key Integrations
 - **MinIO**: S3-compatible object storage for photos, fingerprints, PDFs, QR codes
 - **SourceAFIS**: Biometric fingerprint matching with configurable threshold (40.0)
 - **ZXing**: QR code generation for permits and clearances
-- **Liquibase**: Database migrations in `src/main/resources/db/changelog/`
+- **Liquibase**: Database migrations in `src/main/resources/db/changelog/changes/`
 - **PostgreSQL**: Primary database with UUID extension enabled
+- **In-memory cache**: `CacheConfig` uses `ConcurrentMapCacheManager` for owners, livestock, clearances, permits, officers
 
 ### Critical Business Flows
 
@@ -102,27 +84,27 @@ Controller → Service → Repository → Database
 4. **Completion**: Mark as COMPLETED at destination
 
 **Tag Code System**:
-- Province codes: BW, HA, MA, MC, ME, MW, MV, MN, MS, ML (10 provinces of Zimbabwe)
+- `TagCodeGenerator` province-to-code mappings (used in tag codes, not Province entity codes):
+  `Bulawayo→BW, Harare→HA, Manicaland→MA, Mashonaland Central→MC, Mashonaland East→ME, Mashonaland West→MW, Masvingo→MV, Matabeleland North→MN, Matabeleland South→MS, Midlands→ML`
 - Format: `^[A-Z]{2}-\d{2}-\d{3}-\d{4}$`
-- Serial auto-incremented per ward to ensure uniqueness
-- Parse components using `TagCodeGenerator.parseTagCode()`
+- Serial auto-incremented per ward using `LivestockRepository.findByTagCodePattern()`
+- Extract parts using `TagCodeGenerator.extractProvinceCode()`, `extractDistrictCode()`, `extractWardCode()`, `extractSerial()`
 
 ## Database Schema
 
 ### Core Entities
 - **Owner**: Livestock owners with biometric fingerprint templates stored in MinIO
-- **Officer**: AGRITEX officers, police, vets, admins with role-based access
-- **Livestock**: Animals with tag codes, parentage (mother/father), GPS, photos
+- **Officer**: System users with role-based access (see Roles below)
+- **Livestock**: Animals with tag codes, parentage (mother/father self-referential), GPS, photos
 - **LivestockPhoto**: Multiple photos per animal with type classification
 - **PoliceClearance**: Ownership verification workflow (PENDING → APPROVED/REJECTED → EXPIRED)
 - **MovementPermit**: Digital movement authorization (PENDING → APPROVED → IN_TRANSIT → COMPLETED)
 - **PermitVerification**: Checkpoint scan audit trail with GPS coordinates
+- **Vaccination**: Animal vaccination records linked to Livestock and administering Officer
+- **Province / District / Ward**: Administrative hierarchy (Province → District → Ward) with code fields
 
 ### Audit Pattern
-All entities extend `BaseEntity` with:
-- `createdAt`, `updatedAt` timestamps (auto-managed by `@EntityListeners`)
-- `createdBy`, `updatedBy` auditor tracking (configured in `AuditConfig`)
-- `@Version` for optimistic locking to prevent concurrent update conflicts
+All entities extend `BaseEntity` with `createdAt`, `updatedAt`, `createdBy`, `updatedBy` (via `@EntityListeners`), and `@Version` for optimistic locking.
 
 ### Important Relationships
 - Livestock → Owner (many-to-one)
@@ -130,157 +112,127 @@ All entities extend `BaseEntity` with:
 - PoliceClearance → Livestock, Owner (many-to-one)
 - MovementPermit → Livestock, PoliceClearance (many-to-one)
 - PermitVerification → MovementPermit (many-to-one)
+- Vaccination → Livestock, Officer (many-to-one)
+- District → Province (many-to-one), Ward → District (many-to-one)
 
 ## Configuration
 
 ### Environment Variables
-```yaml
-# Database
+```bash
 DATABASE_URL=jdbc:postgresql://localhost:5432/digistock
 DATABASE_USERNAME=digistock
 DATABASE_PASSWORD=digistock
-
-# MinIO
-MINIO_ENDPOINT=http://localhost:9000
+MINIO_ENDPOINT=http://localhost:9000   # Must set explicitly; default in application.properties is port 30900
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
-
-# SourceAFIS
-SOURCEAFIS_THRESHOLD=40.0
-
-# Server
+JWT_SECRET=<hex-encoded-256-bit-key>
+JWT_EXPIRATION=86400000
 SERVER_PORT=8080
 ```
 
 ### MinIO Buckets (auto-created on startup)
-- `digistock-livestock-photos`: Animal photos
-- `digistock-fingerprints`: Biometric templates (encrypted)
-- `digistock-permits`: Movement permit PDFs
-- `digistock-clearances`: Police clearance PDFs
-- `digistock-qr-codes`: Generated QR codes
+`digistock-livestock-photos`, `digistock-fingerprints`, `digistock-permits`, `digistock-clearances`, `digistock-qr-codes`
 
 ### Business Rules Configuration
 ```yaml
 digistock:
-  permit:
-    default-validity-days: 7      # Movement permit expiry
-  clearance:
-    default-validity-days: 14     # Police clearance expiry
-  qr:
-    size: 300                       # QR code dimensions in pixels
+  permit.default-validity-days: 7
+  clearance.default-validity-days: 14
+  qr.size: 300
 ```
 
 ## Code Patterns
 
+### API Response Wrapper
+All controllers return `ApiResponse<T>` from `util/ApiResponse.java`:
+```java
+return ResponseEntity.ok(ApiResponse.success(data));
+return ResponseEntity.ok(ApiResponse.success(data, "Created successfully"));
+return ResponseEntity.badRequest().body(ApiResponse.error("message"));
+```
+Paginated results use `PagedResponse` from `util/PagedResponse.java`.
+
 ### Exception Handling
 Centralized `@RestControllerAdvice` in `GlobalExceptionHandler`:
-- `ResourceNotFoundException` → 404 Not Found
-- `DuplicateResourceException` → 409 Conflict (e.g., tag code already exists)
-- `BusinessException` → 400 Bad Request (e.g., livestock is stolen, clearance expired)
-- `MethodArgumentNotValidException` → 400 with field-level validation errors
-
-### DTO Validation
-Use JSR-380 annotations on request DTOs:
-```java
-@NotBlank(message = "Tag code is required")
-@Pattern(regexp = "^[A-Z]{2}-\\d{2}-\\d{3}-\\d{4}$")
-private String tagCode;
-
-@NotNull(message = "Owner ID is required")
-private UUID ownerId;
-```
-
-### Service Transactions
-All service methods use `@Transactional` to ensure data consistency:
-```java
-@Transactional
-public LivestockResponse registerLivestock(RegisterLivestockRequest request) {
-    // Multiple database operations in single transaction
-}
-```
+- `ResourceNotFoundException` → 404
+- `DuplicateResourceException` → 409 (e.g., duplicate tag code)
+- `BusinessException` → 400 (e.g., livestock is stolen, clearance expired)
+- `MethodArgumentNotValidException` → 400 with field-level errors
 
 ### MinIO File References
-Files stored in MinIO use reference format: `minio://bucket/path/to/file`
-- Extract bucket and object path using `MinioStorageService.parseMInioUrl()`
-- Generate presigned URLs via `FileController` for secure time-limited access
-- Store references in database, not file contents
+Files stored as `minio://bucket/path/to/file` in the database.
+- Upload via `MinioStorageService.uploadFile()`
+- Generate presigned URLs via `FileController` (`/api/v1/files/signed-url`)
 
 ### QR Code Formats
-Structured data for parsing at checkpoints:
 - Permits: `PERMIT:{permitNumber}:{tagCode}:{validUntil}`
 - Clearances: `CLEARANCE:{clearanceNumber}:{tagCode}:{expiryDate}`
 - Livestock: `LIVESTOCK:{tagCode}:{ownerId}`
 
-## Security Notes
+## Security
 
-### Current State (MVP)
-- Authentication **disabled** for development (`SecurityConfig` permits all endpoints)
-- Use `X-Officer-Id` header to simulate authenticated requests
-- BCrypt password encoder configured for future use
+JWT authentication is **active**. The `JwtAuthenticationFilter` validates Bearer tokens on all `/api/v1/**` endpoints except `/api/v1/auth/**`. Authenticate via `POST /api/v1/auth/login` to obtain a token.
 
-### Future Implementation
-- OAuth2/JWT authentication planned
-- Role-based method security with `@PreAuthorize`
-- Roles: ADMIN, AGRITEX_OFFICER, POLICE_OFFICER, OWNER, VETERINARY_INSPECTOR
+**Officer Roles** (full `UserRole` enum):
+- `NATIONAL_ADMIN`, `PROVINCIAL_ADMIN`, `DISTRICT_ADMIN`, `ADMIN` (legacy)
+- `AGRITEX_OFFICER` — registers livestock, enrolls owners, issues permits
+- `POLICE_OFFICER` — issues clearances, verifies permits at checkpoints
+- `VETERINARY_OFFICER` — health records, vaccination logs
+- `VETERINARY_INSPECTOR` (legacy), `OWNER`, `TRANSPORTER`
 
-## Testing Strategy
+**Seed credentials** (created by `AppSeeder` on first startup):
+| Email | Password | Role |
+|---|---|---|
+| `national.admin@digistock.gov.zw` | `Admin@2024` | NATIONAL_ADMIN |
+| `provincial.admin.harare@digistock.gov.zw` | `Admin@2024` | PROVINCIAL_ADMIN |
+| `agritex.officer@digistock.gov.zw` | `Agritex@2024` | AGRITEX_OFFICER |
+| `veterinary.officer@digistock.gov.zw` | `Vet@2024` | VETERINARY_OFFICER |
+| `police.officer@digistock.gov.zw` | `Police@2024` | POLICE_OFFICER |
 
-### Test Structure
-```
-src/test/java/
-  └── zw/co/digistock/
-      ├── service/          # Unit tests for business logic
-      ├── repository/       # Integration tests with @DataJpaTest
-      └── controller/       # API tests with @WebMvcTest
-```
-
-### Test Data
-- Default admin user created by Liquibase seed data (003-seed-data.xml)
-- Email: `admin@digistock.zw`, Password: `Admin@123`
+`AppSeeder` (a `CommandLineRunner`) also seeds Provinces, Districts, Wards, a test Owner, Livestock, and Vaccinations on first run if tables are empty.
 
 ## Development Workflow
 
 ### Adding New Endpoints
 1. Create/update DTO in `dto/request/` or `dto/response/`
-2. Add business logic to service layer with `@Transactional`
-3. Create controller endpoint with proper HTTP method and path
-4. Update Swagger annotations for API documentation
-5. Handle exceptions using existing exception types
+2. Add interface method to `I{Entity}Service.java` and implement in `{Entity}Service.java`
+3. Create controller endpoint annotated with Swagger `@Operation`/`@Tag`
+4. Return `ApiResponse<T>` or `ApiResponse<PagedResponse<T>>`
+5. Use existing exceptions (`ResourceNotFoundException`, `BusinessException`, `DuplicateResourceException`)
 
 ### Database Changes
-1. Create new Liquibase changeset in `db/changelog/`
-2. Use semantic naming: `00X-description.xml`
-3. Include rollback instructions
-4. Test with `./mvnw liquibase:rollback` before committing
+1. Create new Liquibase changeset in `src/main/resources/db/changelog/changes/`
+2. Naming convention: `00X-description.xml`
+3. Reference in `db.changelog-master.xml`
+4. Include `<rollback>` instructions
 
 ### File Upload Handling
 1. Accept `MultipartFile` in controller
-2. Validate file type and size (max 10MB per file, 15MB per request)
-3. Upload to MinIO using `MinioStorageService.uploadFile()`
-4. Store MinIO reference (`minio://bucket/path`) in entity
-5. Generate presigned URLs via `/api/v1/files/signed-url` for retrieval
+2. Validate file type and size (max 10MB per file, 15MB per request — enforced by Spring)
+3. Upload to MinIO via `MinioStorageService.uploadFile()`
+4. Store `minio://bucket/path` reference in entity field
 
 ## Common Pitfalls
 
-- **Tag code uniqueness**: Always check for duplicates before registering livestock
-- **Stolen status**: Validate livestock is not stolen before issuing clearances or permits
-- **Clearance expiry**: Check `expiresAt` date before issuing permits
-- **Transactional boundaries**: Ensure `@Transactional` on service methods to prevent partial updates
-- **MinIO references**: Store references, not file content, in database fields
-- **GPS coordinates**: Use `BigDecimal` for latitude/longitude to maintain precision
-- **Enum validation**: Use `@Enumerated(EnumType.STRING)` for readability in database
-- **Parent references**: Validate mother/father livestock exists before setting parentage
+- **MinIO endpoint**: `application.properties` defaults to port `30900`, not `9000`. Always set `MINIO_ENDPOINT=http://localhost:9000` when running locally with docker-compose.
+- **Tag code province codes vs Province entity codes**: `TagCodeGenerator` maps `"Harare"→"HA"` for tag code prefixes; the `Province` entity stores code `"HR"`. These are different fields serving different purposes.
+- **Tag code uniqueness**: Check for duplicates before registering livestock.
+- **Stolen status**: Validate livestock is not stolen before issuing clearances or permits.
+- **Clearance expiry**: Check `expiresAt` before issuing permits.
+- **MinIO references**: Store `minio://` references in DB, not file content.
+- **GPS coordinates**: Use `BigDecimal` for latitude/longitude.
+- **Enum validation**: Use `@Enumerated(EnumType.STRING)`.
 
 ## Troubleshooting
 
-**Database connection errors**: Verify PostgreSQL is running via `docker-compose ps`
-**MinIO upload failures**: Check MinIO console (http://localhost:9001) for bucket permissions
-**Liquibase errors**: Run `./mvnw liquibase:status` to check pending changesets
-**QR code generation fails**: Ensure `digistock-qr-codes` bucket exists in MinIO
-**Fingerprint matching errors**: Verify fingerprint image format and SourceAFIS threshold configuration
+**Database connection errors**: Verify PostgreSQL via `docker-compose ps`; note default credentials in docker-compose are `digistock`/`digistock` but `application.properties` defaults to `postgres`/`12345678` — set env vars explicitly.
+**MinIO upload failures**: Check MinIO console (http://localhost:9001) for bucket permissions; ensure `MINIO_ENDPOINT` is set correctly.
+**Liquibase errors**: Run `./mvnw liquibase:status` to check pending changesets.
+**AppSeeder errors**: Seeder runs once on startup when tables are empty; check province/district/ward data exists before running seeder-dependent tests.
 
 ## Documentation References
 
-- **API Documentation**: See `API_DOCUMENTATION.md` for complete endpoint reference
-- **Implementation Status**: See `IMPLEMENTATION_STATUS.md` for completed features and statistics
-- **README**: See `README.md` for project overview and setup instructions
+- **API Documentation**: `API_DOCUMENTATION.md`
+- **System Design**: `DIGISTOCK_SYSTEM_DESIGN.md`
+- **Implementation Status**: `IMPLEMENTATION_STATUS.md`
+- **Backend Structure**: `BACKEND_STRUCTURE.md`
