@@ -17,6 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import zw.co.digistock.security.JwtAuthenticationFilter;
 
 /**
@@ -33,6 +36,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Set web expression handler (with role hierarchy) as a shared object so it's used by HttpSecurity
+        http.setSharedObject(DefaultWebSecurityExpressionHandler.class, customWebSecurityExpressionHandler(roleHierarchy()));
+
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
@@ -78,5 +84,28 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // -------------------------------------------------------------------------
+    // Role hierarchy configuration
+    // -------------------------------------------------------------------------
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
+        // NATIONAL_ADMIN should inherit ADMIN privileges; ADMIN inherits provincial, etc.
+        String roles = "ROLE_NATIONAL_ADMIN > ROLE_ADMIN\n"
+                     + "ROLE_ADMIN > ROLE_PROVINCIAL_ADMIN\n"
+                     + "ROLE_PROVINCIAL_ADMIN > ROLE_DISTRICT_ADMIN";
+        hierarchy.setHierarchy(roles);
+        return hierarchy;
+    }
+
+    // Renamed bean to avoid collision with Spring's default 'webSecurityExpressionHandler' bean
+    @Bean
+    public DefaultWebSecurityExpressionHandler customWebSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
+        DefaultWebSecurityExpressionHandler handler = new DefaultWebSecurityExpressionHandler();
+        handler.setRoleHierarchy(roleHierarchy);
+        return handler;
     }
 }

@@ -307,6 +307,22 @@ public class AppSeeder implements CommandLineRunner {
                     .build();
             officerRepository.save(policeOfficer);
 
+            // System Administrator (legacy/system admin)
+            Officer systemAdmin = Officer.builder()
+                    .firstName("System")
+                    .lastName("Administrator")
+                    .email("admin@digistock.gov.zw")
+                    .phoneNumber("0771234599")
+                    .passwordHash(passwordEncoder.encode("Admin@2024"))
+                    .role(UserRole.ADMIN)
+                    .province(harareProvince.getName())
+                    .district(harareCentral.getName())
+                    .ward(ward1.getName())
+                    .officerCode("SYSADMIN")
+                    .active(true)
+                    .build();
+            officerRepository.save(systemAdmin);
+
             log.info("Administrative users seeded successfully");
         }
     }
